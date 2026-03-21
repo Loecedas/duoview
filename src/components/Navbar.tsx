@@ -1,0 +1,151 @@
+import React from 'react';
+
+interface NavbarProps {
+    refreshing: boolean;
+    sharing: boolean;
+    fetchData: (showRefreshing?: boolean) => void;
+    handleShare: () => void;
+    theme: 'light' | 'dark' | 'system';
+    themeOpen: boolean;
+    setThemeOpen: (open: boolean | ((o: boolean) => boolean)) => void;
+    changeTheme: (t: 'light' | 'dark' | 'system') => void;
+    themeIcon: { light: string; dark: string; system: string };
+    getUpdateStatusText: () => string;
+    themeRef: React.RefObject<HTMLDivElement | null>;
+    resolvedTheme: 'light' | 'dark';
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
+    refreshing,
+    sharing,
+    fetchData,
+    handleShare,
+    theme,
+    themeOpen,
+    setThemeOpen,
+    changeTheme,
+    themeIcon,
+    getUpdateStatusText,
+    themeRef,
+    resolvedTheme
+}) => {
+    const isDark = resolvedTheme === 'dark';
+
+    return (
+        <nav 
+            className={`sticky top-0 z-30 w-full transition-all duration-300 border-b backdrop-blur-sm shadow-sm ${
+                isDark 
+                ? 'bg-[#0f172a]/95 border-slate-800 text-slate-100' 
+                : 'bg-white/95 border-gray-200 text-gray-800'
+            }`}
+        >
+            <div className="max-w-7xl mx-auto px-3 py-2 sm:px-6 lg:px-8 sm:py-3 relative min-h-[3.5rem] sm:min-h-[4.5rem] flex items-center justify-between">
+                {/* 左侧：返回按钮 */}
+                <div className="z-10">
+                    <a
+                        href="/"
+                        className={`inline-flex items-center gap-1 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+                            isDark
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                        }`}
+                    >
+                        ← 返回<span className="hidden sm:inline">首页</span>
+                    </a>
+                </div>
+                
+                {/* 中间：Logo (Mobile 仅图标 / Desktop 文字+图标) */}
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 pointer-events-none">
+                    <span className="text-xl sm:text-2xl">🦜</span>
+                    <span className="text-base font-black text-[#58cc02] sm:text-lg lg:text-xl hidden sm:inline">DuoView</span>
+                </div>
+
+                {/* 右侧：操作区 */}
+                <div className="flex items-center gap-1.5 sm:gap-2 z-10">
+                    <div className="hidden sm:flex items-center px-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-gray-600'}`} aria-live="polite">
+                            {getUpdateStatusText()}
+                        </span>
+                    </div>
+                    
+                    {/* Theme picker */}
+                    <div className="relative" ref={themeRef}>
+                        <button
+                            type="button"
+                            onClick={() => setThemeOpen(o => !o)}
+                            className={`flex items-center gap-1.5 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+                                isDark
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                                : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                            }`}
+                        >
+                            <span className="text-sm sm:text-base">{themeIcon[theme]}</span>
+                            <span className="hidden lg:inline">主题</span>
+                        </button>
+                        {themeOpen && (
+                            <div className={`absolute right-0 top-full mt-2 z-50 min-w-[130px] overflow-hidden rounded-2xl border-2 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 ${
+                                isDark
+                                ? 'bg-slate-800 border-slate-700'
+                                : 'bg-white border-gray-200'
+                            }`}>
+                                {(['light', 'dark', 'system'] as const).map(t => (
+                                    <button
+                                        type="button"
+                                        key={t}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            changeTheme(t);
+                                        }}
+                                        className={`flex w-full items-center gap-2 px-4 py-2.5 text-sm font-bold transition-colors ${
+                                            isDark
+                                            ? `hover:bg-slate-700 ${theme === t ? 'text-[#1cb0f6]' : 'text-slate-300'}`
+                                            : `hover:bg-gray-50 ${theme === t ? 'text-[#1cb0f6]' : 'text-gray-600'}`
+                                        }`}
+                                    >
+                                        <span className="text-base">{themeIcon[t]}</span>
+                                        {t === 'light' ? '浅色' : t === 'dark' ? '深色' : '跟随系统'}
+                                        {theme === t && <span className="ml-auto text-[#1cb0f6]">✓</span>}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 分享按钮 */}
+                    <button
+                        type="button"
+                        onClick={handleShare}
+                        disabled={sharing}
+                        className={`flex items-center gap-1.5 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors disabled:opacity-60 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+                            isDark
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                        }`}
+                    >
+                        <span className={`text-sm sm:text-base ${sharing ? 'animate-spin' : ''}`}>📷</span>
+                        <span className="hidden lg:inline">{sharing ? '截图中' : '分享'}</span>
+                    </button>
+
+                    {/* 刷新按钮 */}
+                    <button
+                        type="button"
+                        onClick={() => fetchData(true)}
+                        disabled={refreshing}
+                        className={`flex min-w-fit items-center justify-center gap-1 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors disabled:opacity-60 sm:min-w-[2.5rem] lg:min-w-[4.5rem] sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
+                            isDark
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#58cc02] hover:text-[#58cc02]'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#58cc02] hover:text-[#58cc02]'
+                        }`}
+                    >
+                        {refreshing ? (
+                            <span className="inline-block w-3 h-3 border-2 border-gray-300 border-t-[#58cc02] rounded-full animate-spin sm:w-4 sm:h-4" />
+                        ) : (
+                            <span className="text-sm sm:text-base">🔄</span>
+                        )}
+                        <span className="hidden lg:inline">刷新</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    );
+};

@@ -1,0 +1,32 @@
+---
+import '../styles/global.css';
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem('duoview-theme');
+          const mq = window.matchMedia('(prefers-color-scheme: dark)');
+          const resolved = saved === 'light' || saved === 'dark'
+            ? saved
+            : (mq.matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', resolved);
+          document.body?.setAttribute('data-theme', resolved);
+        } catch {
+          // no-op: keep default light theme when storage access fails
+        }
+      })();
+    </script>
+    <title>DuoView · 多邻国学习数据查看器</title>
+    <meta name="description" content="输入任意多邻国用户名，秒速生成专属学习仪表盘。" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-[#f0f4f8] min-h-screen font-nunito">
+    <slot />
+  </body>
+</html>
