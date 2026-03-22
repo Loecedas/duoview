@@ -57,20 +57,29 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
   const [viewMode, setViewMode] = useState<ViewMode>(forceViewMode || 'year');
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // 切换视图参数时清除 Tooltip，防止其“卡”在旧位置
   useEffect(() => {
     setTooltip(null);
   }, [selectedYear, selectedQuarter, selectedHalf, viewMode]);
 
   useEffect(() => {
+    if (forceViewMode) {
+      setViewMode(forceViewMode);
+      return undefined;
+    }
+
     let timeoutId: ReturnType<typeof setTimeout>;
 
     function checkScreenSize(): void {
       const width = window.innerWidth;
+      const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
+      const currentHalf = new Date().getMonth() < 6 ? 1 : 2;
+
       if (width < 640) {
         setViewMode('quarter');
+        setSelectedQuarter(currentQuarter);
       } else if (width < 1200) {
         setViewMode('half');
+        setSelectedHalf(currentHalf);
       } else {
         setViewMode('year');
       }
@@ -80,8 +89,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
       clearTimeout(timeoutId);
       timeoutId = setTimeout(checkScreenSize, 150);
     }
-
-    if (forceViewMode) return undefined;
 
     checkScreenSize();
     window.addEventListener('resize', debouncedCheck);
@@ -248,7 +255,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
     updateTooltipPosition(day.dateStr, day.xp, day.time);
   }
 
-  // 导航到前一天或后一天
   function navigateDay(direction: -1 | 1): void {
     if (!tooltip) return;
 
@@ -256,7 +262,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
     currentDate.setDate(currentDate.getDate() + direction);
     const newDateStr = toLocalDateStr(currentDate);
 
-    // 查找新日期的数据
     const dayData = allDates.find(d => d.dateStr === newDateStr);
     if (!dayData) return;
 
@@ -280,7 +285,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
     updateTooltipPosition(newDateStr, dayData.xp, dayData.time);
   }
 
-  // 检查是否可以选择前一天/后一天
   function canNavigate(direction: -1 | 1): boolean {
     if (!tooltip) return false;
 
@@ -355,7 +359,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
 
       <div className="w-full pb-2">
         <div className="relative w-full">
-          {/* 月份标签 */}
           <div className="flex ml-4 mb-1 text-xs text-gray-600 h-4 relative w-full">
             {monthLabels.map((label, idx) => (
               <div
@@ -368,7 +371,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
             ))}
           </div>
 
-          {/* 使用 grid 统一布局 */}
           <div
             className="grid gap-[1px] lg:gap-[2px] relative w-full p-1"
             style={{
@@ -407,7 +409,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
             ))}
           </div>
 
-          {/* Tooltip with navigation */}
           {tooltip && typeof document !== 'undefined' && createPortal(
             <>
               <div
@@ -480,7 +481,6 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
             document.body
           )}
 
-          {/* 图例 */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-3 gap-1 sm:gap-0">
             <div className="text-xs text-gray-500">
               {selectedYear}
