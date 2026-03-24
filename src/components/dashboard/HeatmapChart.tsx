@@ -21,6 +21,9 @@ interface TooltipInfo {
   alignment: TooltipAlignment;
 }
 
+const QUARTER_BREAKPOINT = 560;
+const HALF_BREAKPOINT = 960;
+
 const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -47,6 +50,12 @@ function getColor(xp: number, maxXp: number): string {
   return '#216E39';
 }
 
+function getResponsiveViewMode(width: number): ViewMode {
+  if (width < QUARTER_BREAKPOINT) return 'quarter';
+  if (width < HALF_BREAKPOINT) return 'half';
+  return 'year';
+}
+
 export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactElement {
   const data = userData.yearlyXpHistory || [];
   const now = new Date();
@@ -55,6 +64,8 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
   const [selectedHalf, setSelectedHalf] = useState<number>(now.getMonth() < 6 ? 1 : 2);
   const [tooltip, setTooltip] = useState<TooltipInfo | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(forceViewMode || 'year');
+  const [containerWidth, setContainerWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,41 +73,55 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
   }, [selectedYear, selectedQuarter, selectedHalf, viewMode]);
 
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = (nextWidth?: number) => {
+      const measuredWidth = nextWidth ?? container.getBoundingClientRect().width;
+      setContainerWidth(measuredWidth || window.innerWidth);
+    };
+
+    updateWidth();
+
+    if (typeof ResizeObserver === 'undefined') {
+      const handleWindowResize = () => updateWidth();
+      window.addEventListener('resize', handleWindowResize);
+      return () => window.removeEventListener('resize', handleWindowResize);
+    }
+
+    const observer = new ResizeObserver(entries => {
+      const entry = entries[0];
+      updateWidth(entry?.contentRect.width);
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (forceViewMode) {
       setViewMode(forceViewMode);
-      return undefined;
+      return;
     }
 
-    let timeoutId: ReturnType<typeof setTimeout>;
+    if (!containerWidth) return;
 
-    function checkScreenSize(): void {
-      const width = window.innerWidth;
-      const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
-      const currentHalf = new Date().getMonth() < 6 ? 1 : 2;
+    const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
+    const currentHalf = new Date().getMonth() < 6 ? 1 : 2;
+    const nextViewMode = getResponsiveViewMode(containerWidth);
 
-      if (width < 640) {
-        setViewMode('quarter');
-        setSelectedQuarter(currentQuarter);
-      } else if (width < 1200) {
-        setViewMode('half');
-        setSelectedHalf(currentHalf);
-      } else {
-        setViewMode('year');
-      }
+    if (viewMode === nextViewMode) return;
+
+    if (nextViewMode === 'quarter') {
+      setSelectedQuarter(currentQuarter);
     }
 
-    function debouncedCheck(): void {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(checkScreenSize, 150);
+    if (nextViewMode === 'half') {
+      setSelectedHalf(currentHalf);
     }
 
-    checkScreenSize();
-    window.addEventListener('resize', debouncedCheck);
-    return () => {
-      window.removeEventListener('resize', debouncedCheck);
-      clearTimeout(timeoutId);
-    };
-  }, [forceViewMode]);
+    setViewMode(nextViewMode);
+  }, [containerWidth, forceViewMode, viewMode]);
 
   useEffect(() => {
     if (!tooltip) return;
@@ -213,6 +238,12 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
 
   const viewXp = allDates.reduce((sum, d) => sum + (d.xp > 0 ? d.xp : 0), 0);
   const activeDays = allDates.filter(d => d.xp > 0).length;
+  const showWeekdayLabels = viewMode !== 'quarter' || containerWidth >= 400;
+  const monthLabelOffset = showWeekdayLabels ? 16 : 0;
+  const heatmapStartColumn = showWeekdayLabels ? 2 : 1;
+  const gridMinWidth = viewMode === 'year'
+    ? `${Math.max(720, weeks.length * 14 + monthLabelOffset + 24)}px`
+    : undefined;
 
   const updateTooltipPosition = useCallback((dateStr: string, xp: number, time?: number) => {
     const cellEl = document.querySelector(
@@ -249,7 +280,7 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
     };
   }, [tooltip, updateTooltipPosition]);
 
-  function handleDayClick(day: typeof allDates[0], e: React.MouseEvent<HTMLDivElement>): void {
+  function handleDayClick(day: typeof allDates[0]): void {
     if (day.xp < 0 || !day.dateStr) return;
 
     updateTooltipPosition(day.dateStr, day.xp, day.time);
@@ -304,7 +335,7 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-b-4 border-gray-200">
+    <div ref={containerRef} className="bg-white rounded-2xl p-6 shadow-sm border-2 border-b-4 border-gray-200">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <h2 className="text-gray-700 font-bold text-xl">📅 年度学习热力图</h2>
         <div className="flex items-center gap-2 flex-wrap">
@@ -359,26 +390,30 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
 
       <div className="w-full pb-2">
         <div className="relative w-full">
-          <div className="flex ml-4 mb-1 text-xs text-gray-600 h-4 relative w-full">
-            {monthLabels.map((label, idx) => (
-              <div
-                key={idx}
-                className="absolute whitespace-nowrap"
-                style={{ left: `${(label.weekIndex / weeks.length) * 100}%` }}
-              >
-                {label.month}
-              </div>
-            ))}
+          <div className="mb-1 h-4 text-xs text-gray-600" style={{ paddingLeft: `${monthLabelOffset}px` }}>
+            <div className="relative h-full w-full">
+              {monthLabels.map((label, idx) => (
+                <div
+                  key={idx}
+                  className="absolute whitespace-nowrap"
+                  style={{ left: `${(label.weekIndex / weeks.length) * 100}%` }}
+                >
+                  {label.month}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div
             className="grid gap-[1px] lg:gap-[2px] relative w-full p-1"
             style={{
-              gridTemplateColumns: `16px repeat(${weeks.length}, minmax(12px, 1fr))`,
-              minWidth: `${Math.max(320, weeks.length * 14 + 28)}px`,
+              gridTemplateColumns: showWeekdayLabels
+                ? `16px repeat(${weeks.length}, minmax(0, 1fr))`
+                : `repeat(${weeks.length}, minmax(0, 1fr))`,
+              minWidth: gridMinWidth,
             }}
           >
-            {WEEKDAYS.map((label, idx) => (
+            {showWeekdayLabels && WEEKDAYS.map((label, idx) => (
               <div
                 key={`label-${idx}`}
                 className="text-[10px] text-gray-500 flex items-center justify-center"
@@ -398,11 +433,11 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
                     data-heatmap-date={day.dateStr || undefined}
                     style={{
                       backgroundColor: getColor(day.xp, maxXp),
-                      gridColumn: weekIdx + 2,
+                      gridColumn: weekIdx + heatmapStartColumn,
                       gridRow: dayIdx + 1,
                       paddingBottom: '100%',
                     }}
-                    onClick={(e) => handleDayClick(day, e)}
+                    onClick={() => handleDayClick(day)}
                   />
                 );
               })
