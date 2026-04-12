@@ -4,8 +4,10 @@ import {
     ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import type { UserData } from '../../types';
+import { AppIcon } from '../AppIcon';
+import type { IconMode } from '../useIconMode';
 
-interface Props { userData: UserData; seq?: number; theme?: 'light' | 'dark'; isPrinting?: boolean; }
+interface Props { userData: UserData; seq?: number; theme?: 'light' | 'dark'; isPrinting?: boolean; iconMode: IconMode; }
 
 function formatMinutes(total: number): string {
     const h = Math.floor(total / 60);
@@ -30,7 +32,7 @@ function SingleAreaChart({
 }: {
     data: Record<string, unknown>[];
     dataKey: string;
-    title: string;
+    title: React.ReactNode;
     color: string;
     gradientId: string;
     footerLabel: string;
@@ -42,7 +44,7 @@ function SingleAreaChart({
 }) {
     return (
         <div className="bg-white rounded-2xl p-4 shadow-sm border-2 border-b-4 border-gray-200 flex flex-col gap-2">
-            <h2 className="text-gray-800 font-bold text-base">{title}</h2>
+            <h2 className="flex min-h-6 items-center text-base font-bold leading-none text-gray-800">{title}</h2>
             <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={data} margin={{ top: 8, right: 4, left: -16, bottom: 0 }}>
                     <defs>
@@ -106,7 +108,24 @@ function SingleAreaChart({
     );
 }
 
-export function XpBarChart({ userData, theme = 'light', isPrinting = false }: Props) {
+function ChartTitle({
+    icon,
+    iconMode,
+    children,
+}: {
+    icon: 'bolt' | 'clock';
+    iconMode: IconMode;
+    children: React.ReactNode;
+}) {
+    return (
+        <span className="inline-flex h-6 items-center gap-1.5 whitespace-nowrap leading-none">
+            <AppIcon name={icon} mode={iconMode} className="text-[1.05em]" />
+            {children}
+        </span>
+    );
+}
+
+export function XpBarChart({ userData, theme = 'light', isPrinting = false, iconMode }: Props) {
     const xpData = (userData.dailyXpHistory?.slice(-7) ?? []) as Record<string, unknown>[];
     const timeData = (userData.dailyTimeHistory?.slice(-7) ?? []) as Record<string, unknown>[];
     const isDark = theme === 'dark';
@@ -127,7 +146,7 @@ export function XpBarChart({ userData, theme = 'light', isPrinting = false }: Pr
             <SingleAreaChart
                 data={xpData}
                 dataKey="xp"
-                title="⚡ 最近 7 天经验"
+                title={<ChartTitle icon="bolt" iconMode={iconMode}>最近 7 天经验</ChartTitle>}
                 color="#58cc02"
                 gradientId="xpGradient"
                 footerLabel="本周共获得"
@@ -141,7 +160,7 @@ export function XpBarChart({ userData, theme = 'light', isPrinting = false }: Pr
                 <SingleAreaChart
                     data={timeData}
                     dataKey="time"
-                    title="⏱️ 最近 7 天学习时间"
+                    title={<ChartTitle icon="clock" iconMode={iconMode}>最近 7 天学习时间</ChartTitle>}
                     color="#1cb0f6"
                     gradientId="timeGradient"
                     footerLabel="本周学习"

@@ -1,35 +1,54 @@
 import React from 'react';
 import type { UserData } from '../../types';
+import { AppIcon } from '../AppIcon';
+import type { IconMode } from '../useIconMode';
 
 interface TodayOverviewProps {
   userData: UserData | null;
+  iconMode: IconMode;
   seq?: number;
 }
 
-export function TodayOverview({ userData, seq = 4 }: TodayOverviewProps): React.ReactElement {
+export function TodayOverview({ userData, iconMode, seq = 4 }: TodayOverviewProps): React.ReactElement {
   const todayTime = userData?.dailyTimeHistory?.length
     ? userData.dailyTimeHistory[userData.dailyTimeHistory.length - 1].time || '-'
     : '-';
 
   function renderTodayStatus(): React.ReactNode {
     if (!userData) {
-      return <span className="text-xs text-gray-500">⏰ 今日还未学习</span>;
-    }
-
-    // 优先检查是否使用了冻结卡（当 xpToday 为 0 或未定义时）
-    if (userData.streakExtendedToday && (!userData.xpToday || userData.xpToday === 0)) {
-      return <span className="text-xs text-blue-500">❄️ 使用了连胜冻结卡</span>;
-    }
-
-    if (userData.xpToday && userData.xpToday > 0) {
       return (
-        <span className="text-xs text-gray-500">
-          🔥 今日已学习 {userData.xpToday} XP
+        <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+          <AppIcon name="clock" mode={iconMode} />
+          今日还未学习
         </span>
       );
     }
 
-    return <span className="text-xs text-gray-500">⏰ 今日还未学习</span>;
+    // 优先检查是否使用了冻结卡（当 xpToday 为 0 或未定义时）
+    if (userData.streakExtendedToday && (!userData.xpToday || userData.xpToday === 0)) {
+      return (
+        <span className="inline-flex items-center gap-1 text-xs text-blue-500">
+          <AppIcon name="snowflake" mode={iconMode} />
+          使用了连胜冻结卡
+        </span>
+      );
+    }
+
+    if (userData.xpToday && userData.xpToday > 0) {
+      return (
+        <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+          <AppIcon name="flame" mode={iconMode} />
+          今日已学习 {userData.xpToday} XP
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+        <AppIcon name="clock" mode={iconMode} />
+        今日还未学习
+      </span>
+    );
   }
 
   return (

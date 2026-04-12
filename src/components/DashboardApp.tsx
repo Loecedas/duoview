@@ -6,6 +6,8 @@ import { TodayOverview } from './dashboard/TodayOverview';
 import { XpBarChart } from './dashboard/XpBarChart';
 import { HeatmapChart } from './dashboard/HeatmapChart';
 import { Navbar } from './Navbar';
+import { AppIcon } from './AppIcon';
+import { useIconMode } from './useIconMode';
 
 interface DashboardAppProps {
     username: string;
@@ -23,6 +25,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
     const dashboardRef = useRef<HTMLDivElement>(null);
     const themeRef = useRef<HTMLDivElement>(null);
+    const { iconMode, toggleIconMode } = useIconMode();
 
     const fetchData = useCallback(async (showRefreshing = false) => {
         const controller = new AbortController();
@@ -102,7 +105,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
         setThemeOpen(false);
     };
 
-    const themeIcon = { light: '☀️', dark: '🌙', system: '💻' };
+    const themeIcon = { light: 'sun', dark: 'moon', system: 'desktop' } as const;
 
     const getUpdateStatusText = () => {
         if (refreshing) return '正在更新…';
@@ -216,7 +219,10 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-                <div className="text-5xl animate-bounce">🦜</div>
+                {/*
+                <AppIcon name="parrot" mode={iconMode} className="text-5xl animate-bounce text-[#58cc02]" label="加载中" />
+                */}
+                <AppIcon name="parrot" mode="emoji" className="text-5xl animate-bounce" label="加载中" />
                 <p className="text-gray-600 font-bold text-lg">
                     正在获取 <span className="text-[#1cb0f6]">{username}</span> 的学习数据…
                 </p>
@@ -237,7 +243,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                     ← 返回首页
                 </a>
                 <div className="text-center max-w-sm">
-                    <div className="text-5xl mb-4">😢</div>
+                    <AppIcon name="sad" mode={iconMode} className="mb-4 text-5xl text-red-400" label="错误" />
                     <h2 className="text-xl font-extrabold text-gray-800 mb-2">找不到该用户</h2>
                     <p className="text-gray-500 text-sm mb-6">
                         用户名 <span className="font-bold text-gray-700">{username}</span> 不存在，或该用户资料已设置为私密。
@@ -247,7 +253,8 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                         href="/"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-[#58cc02] hover:bg-[#46a300] text-white font-black rounded-2xl border-b-4 border-[#46a300] transition-colors"
                     >
-                        🔍 重新输入用户名
+                        <AppIcon name="search" mode={iconMode} className="text-white" />
+                        重新输入用户名
                     </a>
                 </div>
             </div>
@@ -257,10 +264,10 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     if (!userData) return null;
 
     const statItems = [
-        { label: '预估投入时间', value: userData.estimatedLearningTime, icon: '⏱️', color: 'text-purple-500', bg: 'bg-purple-50' },
-        { label: '总经验', value: userData.totalXp.toLocaleString() + ' XP', icon: '⚡', color: 'text-yellow-500', bg: 'bg-yellow-50' },
-        { label: '学习课程', value: userData.courses.length, icon: '📚', color: 'text-blue-500', bg: 'bg-blue-50' },
-        { label: '账号年龄', value: `${userData.accountAgeDays} 天`, icon: '📅', color: 'text-purple-500', bg: 'bg-purple-50' },
+        { label: '预估投入时间', value: userData.estimatedLearningTime, icon: 'clock', color: '#a855f7', bg: 'bg-purple-50' },
+        { label: '总经验', value: userData.totalXp.toLocaleString() + ' XP', icon: 'bolt', color: '#eab308', bg: 'bg-yellow-50' },
+        { label: '学习课程', value: userData.courses.length, icon: 'books', color: '#3b82f6', bg: 'bg-blue-50' },
+        { label: '账号年龄', value: `${userData.accountAgeDays} 天`, icon: 'calendar', color: '#a855f7', bg: 'bg-purple-50' },
     ];
 
     return (
@@ -270,10 +277,13 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                 <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-fade-in dark:bg-slate-900/80">
                     <div className="relative mb-6">
                         <div className="h-20 w-20 animate-spin rounded-full border-4 border-gray-200 border-t-[#58cc02]" />
-                        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl">📷</span>
+                        <AppIcon name="camera" mode={iconMode} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-[#58cc02]" />
                     </div>
                     <p className="text-xl font-black text-gray-800 dark:text-white">正在为您生成分享图...</p>
-                    <p className="mt-2 text-sm font-bold text-gray-500">为了保证图表完整，请稍等片刻 🦜</p>
+                    <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-gray-500">
+                        为了保证图表完整，请稍等片刻
+                        <AppIcon name="parrot" mode={iconMode} className="text-base text-[#58cc02]" />
+                    </p>
                 </div>
             )}
 
@@ -282,6 +292,8 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                 sharing={sharing}
                 fetchData={fetchData}
                 handleShare={handleShare}
+                iconMode={iconMode}
+                toggleIconMode={toggleIconMode}
                 theme={theme}
                 themeOpen={themeOpen}
                 setThemeOpen={setThemeOpen}
@@ -308,22 +320,28 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                             </p>
                             <div className="flex flex-wrap items-center gap-2 mt-3">
                                 {userData.isPlus && (
-                                    <span className="inline-block px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black rounded-xl whitespace-nowrap">👑 Super</span>
+                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black rounded-xl whitespace-nowrap">
+                                        <AppIcon name="crown" mode={iconMode} className="text-white" />
+                                        Super
+                                    </span>
                                 )}
-                                <span className="px-3 py-1 bg-gray-100 rounded-xl text-gray-700 text-xs font-bold">🔥 {userData.streak} 天连胜</span>
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-xl text-gray-700 text-xs font-bold">
+                                    <AppIcon name="flame" mode={iconMode} className="text-orange-500" />
+                                    {userData.streak} 天连胜
+                                </span>
                             </div>
                         </div>
 
                         {/* Stat Cards */}
                         <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             {statItems.map((item, i) => (
-                                <StatCard key={item.label} {...item} seq={i + 1} />
+                                <StatCard key={item.label} {...item} iconMode={iconMode} seq={i + 1} />
                             ))}
                         </div>
 
                         {/* Charts */}
                         <div className="mb-4">
-                            <XpBarChart userData={userData} seq={5} theme={resolvedTheme} isPrinting={sharing} />
+                            <XpBarChart userData={userData} seq={5} theme={resolvedTheme} isPrinting={sharing} iconMode={iconMode} />
                         </div>
 
                         {/* Course List (语言分布) */}
@@ -333,12 +351,12 @@ export default function DashboardApp({ username }: DashboardAppProps) {
 
                         {/* Today Overview (今日概览) */}
                         <div className="mb-4">
-                            <TodayOverview userData={userData} seq={6} />
+                            <TodayOverview userData={userData} iconMode={iconMode} seq={6} />
                         </div>
 
                         {/* Heatmap */}
                         <div className="animate-fade-in-up delay-5">
-                            <HeatmapChart userData={userData} />
+                            <HeatmapChart userData={userData} iconMode={iconMode} />
                         </div>
                     </div>
                 </div>

@@ -1,15 +1,20 @@
 import React from 'react';
+import { AppIcon } from './AppIcon';
+import type { IconMode } from './useIconMode';
+import type { IconName } from './AppIcon';
 
 interface NavbarProps {
     refreshing: boolean;
     sharing: boolean;
     fetchData: (showRefreshing?: boolean) => void;
     handleShare: () => void;
+    iconMode: IconMode;
+    toggleIconMode: () => void;
     theme: 'light' | 'dark' | 'system';
     themeOpen: boolean;
     setThemeOpen: (open: boolean | ((o: boolean) => boolean)) => void;
     changeTheme: (t: 'light' | 'dark' | 'system') => void;
-    themeIcon: { light: string; dark: string; system: string };
+    themeIcon: { light: IconName; dark: IconName; system: IconName };
     getUpdateStatusText: () => string;
     themeRef: React.RefObject<HTMLDivElement | null>;
     resolvedTheme: 'light' | 'dark';
@@ -20,6 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     sharing,
     fetchData,
     handleShare,
+    iconMode,
+    toggleIconMode,
     theme,
     themeOpen,
     setThemeOpen,
@@ -56,13 +63,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 
                 {/* 中间：Logo (Mobile 仅图标 / Desktop 文字+图标) */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 pointer-events-none">
-                    <span className="text-xl sm:text-2xl">🦜</span>
+                    <AppIcon name="parrot" mode="emoji" className="text-xl sm:text-2xl" label="DuoView" />
                     <span className="text-base font-black text-[#58cc02] sm:text-lg lg:text-xl hidden sm:inline">DuoView</span>
                 </div>
 
                 {/* 右侧：操作区 */}
                 <div className="flex items-center gap-1.5 sm:gap-2 z-10">
-                    <div className="hidden sm:flex items-center px-1">
+                    <div className="hidden xl:flex items-center px-1">
                         <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-gray-600'}`} aria-live="polite">
                             {getUpdateStatusText()}
                         </span>
@@ -79,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
                             }`}
                         >
-                            <span className="text-sm sm:text-base">{themeIcon[theme]}</span>
+                            <AppIcon name={themeIcon[theme]} mode={iconMode} className="text-current text-sm sm:text-base" />
                             <span className="hidden lg:inline">主题</span>
                         </button>
                         {themeOpen && (
@@ -102,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                             : `hover:bg-gray-50 ${theme === t ? 'text-[#1cb0f6]' : 'text-gray-600'}`
                                         }`}
                                     >
-                                        <span className="text-base">{themeIcon[t]}</span>
+                                        <AppIcon name={themeIcon[t]} mode={iconMode} className="text-current text-base" />
                                         {t === 'light' ? '浅色' : t === 'dark' ? '深色' : '跟随系统'}
                                         {theme === t && <span className="ml-auto text-[#1cb0f6]">✓</span>}
                                     </button>
@@ -121,9 +128,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                             ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
                             : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
                         }`}
-                    >
-                        <span className={`text-sm sm:text-base ${sharing ? 'animate-spin' : ''}`}>📷</span>
+                        >
+                        <AppIcon name="camera" mode={iconMode} className={`text-current text-sm sm:text-base ${sharing ? 'animate-spin' : ''}`} />
                         <span className="hidden lg:inline">{sharing ? '截图中' : '分享'}</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={toggleIconMode}
+                        className={`flex items-center gap-1.5 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+                            isDark
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#ce82ff] hover:text-[#ce82ff]'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#ce82ff] hover:text-[#8b5cf6]'
+                        }`}
+                        aria-pressed={iconMode === 'svg'}
+                        aria-label={iconMode === 'svg' ? '恢复 emoji 图标' : '切换为 SVG 图标'}
+                    >
+                        <AppIcon name="shapes" mode={iconMode} className="text-current text-sm sm:text-base" />
+                        <span className="hidden lg:inline w-[2rem] text-center">图标</span>
                     </button>
 
                     {/* 刷新按钮 */}
@@ -140,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {refreshing ? (
                             <span className="inline-block w-3 h-3 border-2 border-gray-300 border-t-[#58cc02] rounded-full animate-spin sm:w-4 sm:h-4" />
                         ) : (
-                            <span className="text-sm sm:text-base">🔄</span>
+                            <AppIcon name="refresh" mode={iconMode} className="text-current text-sm sm:text-base" />
                         )}
                         <span className="hidden lg:inline">刷新</span>
                     </button>

@@ -1,19 +1,34 @@
 import React from 'react';
 import { StatCardColors } from '../../styles/duolingoColors';
+import { AppIcon } from '../AppIcon';
+import type { IconMode } from '../useIconMode';
+import type { IconName } from '../AppIcon';
 
-const ICON_COLOR_MAP: Record<string, string> = {
-  '⚡': StatCardColors.totalXp,
-  '📅': StatCardColors.accountAge,
-  '📚': StatCardColors.courses,
-  '⏱️': StatCardColors.learningTime,
-  '🔥': StatCardColors.streak,
-  '💎': StatCardColors.gems,
+const ICON_COLOR_MAP: Record<IconName, string> = {
+  bolt: StatCardColors.totalXp,
+  books: StatCardColors.courses,
+  calendar: StatCardColors.accountAge,
+  camera: StatCardColors.gems,
+  clock: StatCardColors.learningTime,
+  crown: StatCardColors.gems,
+  desktop: StatCardColors.totalXp,
+  flame: StatCardColors.streak,
+  hourglass: StatCardColors.learningTime,
+  moon: StatCardColors.accountAge,
+  parrot: StatCardColors.courses,
+  refresh: StatCardColors.courses,
+  sad: StatCardColors.accountAge,
+  search: StatCardColors.totalXp,
+  shapes: StatCardColors.learningTime,
+  snowflake: StatCardColors.accountAge,
+  sun: StatCardColors.totalXp,
 };
 
 const DELAY_CLASSES = ['', 'delay-1', 'delay-2', 'delay-3', 'delay-4', 'delay-5'] as const;
 
 interface StatCardProps {
-  icon: string;
+  icon: IconName;
+  iconMode: IconMode;
   value: string | number;
   label: string;
   colorClass?: string;
@@ -24,6 +39,7 @@ interface StatCardProps {
 
 export function StatCard({
   icon,
+  iconMode,
   value,
   label,
   colorClass,
@@ -41,7 +57,7 @@ export function StatCard({
         className="text-2xl mb-1"
         style={iconColor ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' } : undefined}
       >
-        {icon}
+        <AppIcon name={icon} mode={iconMode} />
       </div>
       <div
         className={`${isLargeText ? 'text-2xl' : 'text-lg'} font-extrabold ${!valueColor ? colorClass : ''}`}

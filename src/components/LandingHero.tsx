@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { AppIcon } from './AppIcon';
+import { useIconMode } from './useIconMode';
 
 export default function LandingHero() {
     const [username, setUsername] = useState('');
     const [loading, setLoading] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+    const { iconMode } = useIconMode();
 
     useEffect(() => {
         const saved = localStorage.getItem('duoview-theme') as 'light' | 'dark' | 'system' | null;
@@ -43,7 +46,7 @@ export default function LandingHero() {
             {/* Logo / Brand */}
             <div className="mb-10 animate-fade-in-up text-center">
                 <div className="flex items-center gap-2 justify-center mb-2">
-                    <span className="text-4xl">🦜</span>
+                    <AppIcon name="parrot" mode="emoji" className="text-4xl" label="DuoView" />
                     <span className="text-4xl font-black text-[#58cc02] tracking-tight">DuoView</span>
                 </div>
                 <p className="text-gray-500 text-sm font-semibold tracking-wider uppercase">多邻国学习数据查看器</p>
@@ -59,7 +62,7 @@ export default function LandingHero() {
                         无需登录 · 输入用户名 · 秒速生成仪表盘
                     </p>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
                         <div>
                             <label htmlFor="username" className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
                                 多邻国用户名 / ID
@@ -68,6 +71,7 @@ export default function LandingHero() {
                                 id="username"
                                 type="text"
                                 autoFocus
+                                autoComplete="off"
                                 value={username}
                                 onChange={e => setUsername(e.target.value)}
                                 placeholder="输入用户名…"
@@ -82,10 +86,14 @@ export default function LandingHero() {
                         >
                             {loading ? (
                                 <>
-                                    <span className="animate-spin">⏳</span> 正在跳转…
+                                    <AppIcon name="hourglass" mode={iconMode} className="text-white animate-spin" />
+                                    正在跳转…
                                 </>
                             ) : (
-                                <>🔍 查看学习数据 →</>
+                                <>
+                                    <AppIcon name="search" mode={iconMode} className="text-white" />
+                                    查看学习数据 →
+                                </>
                             )}
                         </button>
                     </form>

@@ -2,9 +2,12 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom';
 import { DuoColors } from '../../styles/duolingoColors';
 import type { UserData } from '../../types';
+import { AppIcon } from '../AppIcon';
+import type { IconMode } from '../useIconMode';
 
 interface Props {
   userData: UserData;
+  iconMode: IconMode;
   forceViewMode?: ViewMode;
 }
 
@@ -56,7 +59,7 @@ function getResponsiveViewMode(width: number): ViewMode {
   return 'year';
 }
 
-export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactElement {
+export function HeatmapChart({ userData, iconMode, forceViewMode }: Props): React.ReactElement {
   const data = userData.yearlyXpHistory || [];
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
@@ -337,7 +340,10 @@ export function HeatmapChart({ userData, forceViewMode }: Props): React.ReactEle
   return (
     <div ref={containerRef} className="bg-white rounded-2xl p-6 shadow-sm border-2 border-b-4 border-gray-200">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-        <h2 className="text-gray-700 font-bold text-xl">📅 年度学习热力图</h2>
+        <h2 className="inline-flex items-center gap-2 text-gray-700 font-bold text-xl">
+          <AppIcon name="calendar" mode={iconMode} />
+          年度学习热力图
+        </h2>
         <div className="flex items-center gap-2 flex-wrap">
           {sortedYears.map(year => (
             <button
