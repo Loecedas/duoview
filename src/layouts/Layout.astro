@@ -1,4 +1,5 @@
 ---
+import { ViewTransitions } from 'astro:transitions';
 import '../styles/global.css';
 ---
 <!doctype html>
@@ -7,21 +8,35 @@ import '../styles/global.css';
     <meta charset="UTF-8" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦜</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <ViewTransitions />
     <script is:inline>
       (() => {
-        try {
-          const saved = localStorage.getItem('duoview-theme');
-          const mq = window.matchMedia('(prefers-color-scheme: dark)');
-          const resolved = saved === 'light' || saved === 'dark'
-            ? saved
-            : (mq.matches ? 'dark' : 'light');
-          document.documentElement.setAttribute('data-theme', resolved);
-          document.body?.setAttribute('data-theme', resolved);
-        } catch {
-          // no-op: keep default light theme when storage access fails
+        function applyTheme() {
+          try {
+            const saved = localStorage.getItem('duoview-theme');
+            const mq = window.matchMedia('(prefers-color-scheme: dark)');
+            const resolved = saved === 'light' || saved === 'dark'
+              ? saved
+              : (mq.matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', resolved);
+            document.body?.setAttribute('data-theme', resolved);
+            if (resolved === 'dark') {
+              document.documentElement.style.backgroundColor = '#0f172a';
+            } else {
+              document.documentElement.style.backgroundColor = '#f0f4f8';
+            }
+          } catch {}
         }
+        applyTheme();
+        document.addEventListener('astro:after-swap', applyTheme);
       })();
     </script>
+    <style is:inline>
+      html[data-theme="dark"], html[data-theme="dark"] body {
+        background-color: #0f172a !important;
+        color-scheme: dark;
+      }
+    </style>
     <title>DuoView · 多邻国学习数据查看器</title>
     <meta name="description" content="输入任意多邻国用户名，秒速生成专属学习仪表盘。" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

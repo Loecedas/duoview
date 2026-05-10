@@ -271,7 +271,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     ];
 
     return (
-        <div className="min-h-screen bg-[#f0f4f8] dark:bg-slate-900 transition-colors" data-theme={resolvedTheme}>
+        <div className="min-h-screen bg-[#f0f4f8] dark:bg-slate-900" data-theme={resolvedTheme}>
             {/* 截图中的全屏遮罩 - 解决界面跳变问题 */}
             {sharing && (
                 <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-fade-in dark:bg-slate-900/80">
