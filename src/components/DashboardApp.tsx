@@ -266,8 +266,8 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     const statItems = [
         { label: '预估投入时间', value: userData.estimatedLearningTime, icon: 'clock', color: '#a855f7', bg: 'bg-purple-50' },
         { label: '总经验', value: userData.totalXp.toLocaleString() + ' XP', icon: 'bolt', color: '#eab308', bg: 'bg-yellow-50' },
-        { label: '学习课程', value: userData.courses.length, icon: 'books', color: '#3b82f6', bg: 'bg-blue-50' },
-        { label: '账号年龄', value: `${userData.accountAgeDays} 天`, icon: 'calendar', color: '#a855f7', bg: 'bg-purple-50' },
+        { label: '学习课程', value: userData.courses.length, icon: 'books', color: '#58cc02', bg: 'bg-blue-50' },
+        { label: '账号年龄', value: `${userData.accountAgeDays} 天`, icon: 'calendar', color: '#ff4b4b', bg: 'bg-purple-50' },
     ];
 
     return (
@@ -282,7 +282,6 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                     <p className="text-xl font-black text-gray-800 dark:text-white">正在为您生成分享图...</p>
                     <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-gray-500">
                         为了保证图表完整，请稍等片刻
-                        <AppIcon name="parrot" mode={iconMode} className="text-base text-[#58cc02]" />
                     </p>
                 </div>
             )}
@@ -310,7 +309,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                 <div ref={dashboardRef} className="max-w-7xl mx-auto bg-inherit">
                     {/* Page Header */}
                     <div className="animate-fade-in-up">
-                        <div className="mb-6 sm:mb-8">
+                        <div className="mb-3">
                             <h1 className="mb-2 break-words text-2xl font-extrabold text-gray-800 sm:text-3xl">
                                 {username} 的学习数据
                             </h1>
@@ -320,13 +319,13 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                             </p>
                             <div className="flex flex-wrap items-center gap-2 mt-3">
                                 {userData.isPlus && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black rounded-xl whitespace-nowrap">
-                                        <AppIcon name="crown" mode={iconMode} className="text-white" />
+                                    <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#f9f0ff] border border-[#f0d9ff] rounded-2xl text-[#ce82ff] text-sm font-bold whitespace-nowrap">
+                                        <AppIcon name="crown" mode={iconMode} className="text-base" />
                                         Super
                                     </span>
                                 )}
-                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-xl text-gray-700 text-xs font-bold">
-                                    <AppIcon name="flame" mode={iconMode} className="text-orange-500" />
+                                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#fff3e0] border border-[#ffe0b2] rounded-2xl text-[#ff9600] text-sm font-bold whitespace-nowrap">
+                                    <AppIcon name="flame" mode={iconMode} className="text-base" />
                                     {userData.streak} 天连胜
                                 </span>
                             </div>

@@ -40,21 +40,21 @@ export const Navbar: React.FC<NavbarProps> = ({
 
     return (
         <nav 
-            className={`sticky top-0 z-30 w-full transition-all duration-300 border-b backdrop-blur-sm shadow-sm ${
+            className={`sticky top-0 z-30 w-full px-3 sm:px-4 md:px-6 transition-all duration-300 border-b backdrop-blur-sm shadow-sm ${
                 isDark 
                 ? 'bg-[#0f172a]/95 border-slate-800 text-slate-100' 
                 : 'bg-white/95 border-gray-200 text-gray-800'
             }`}
         >
-            <div className="max-w-7xl mx-auto px-3 py-2 sm:px-6 lg:px-8 sm:py-3 relative min-h-[3.5rem] sm:min-h-[4.5rem] flex items-center justify-between">
+            <div className="max-w-7xl mx-auto py-2 sm:py-3 relative min-h-[3.5rem] sm:min-h-[4.5rem] flex items-center justify-between">
                 {/* 左侧：返回按钮 */}
                 <div className="z-10">
                     <a
                         href="/"
                         className={`inline-flex items-center gap-1 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
                             isDark
-                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
-                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600 hover:text-slate-100'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                         }`}
                     >
                         ← 返回<span className="hidden sm:inline">首页</span>
@@ -82,8 +82,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                             onClick={() => setThemeOpen(o => !o)}
                             className={`flex items-center gap-1.5 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
                                 isDark
-                                ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
-                                : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600 hover:text-slate-100'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                             }`}
                         >
                             <AppIcon name={themeIcon[theme]} mode={iconMode} className="text-current text-sm sm:text-base" />
@@ -105,13 +105,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                                         }}
                                         className={`flex w-full items-center gap-2 px-4 py-2.5 text-sm font-bold transition-colors ${
                                             isDark
-                                            ? `hover:bg-slate-700 ${theme === t ? 'text-[#1cb0f6]' : 'text-slate-300'}`
-                                            : `hover:bg-gray-50 ${theme === t ? 'text-[#1cb0f6]' : 'text-gray-600'}`
+                                            ? `hover:bg-slate-700 ${theme === t ? 'text-slate-100 font-extrabold' : 'text-slate-300'}`
+                                            : `hover:bg-gray-50 ${theme === t ? 'text-gray-900 font-extrabold' : 'text-gray-600'}`
                                         }`}
                                     >
                                         <AppIcon name={themeIcon[t]} mode={iconMode} className="text-current text-base" />
-                                        {t === 'light' ? '浅色' : t === 'dark' ? '深色' : '跟随系统'}
-                                        {theme === t && <span className="ml-auto text-[#1cb0f6]">✓</span>}
+                                        {t === 'light' ? '浅色' : t === 'dark' ? '深色' : '系统'}
+                                        {theme === t && <span className="ml-auto">✓</span>}
                                     </button>
                                 ))}
                             </div>
@@ -125,8 +125,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         disabled={sharing}
                         className={`flex items-center gap-1.5 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors disabled:opacity-60 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
                             isDark
-                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
-                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6]'
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600 hover:text-slate-100'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                         }`}
                         >
                         <AppIcon name="camera" mode={iconMode} className={`text-current text-sm sm:text-base ${sharing ? 'animate-spin' : ''}`} />
@@ -138,8 +138,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         onClick={toggleIconMode}
                         className={`flex items-center gap-1.5 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
                             isDark
-                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#ce82ff] hover:text-[#ce82ff]'
-                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#ce82ff] hover:text-[#8b5cf6]'
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600 hover:text-slate-100'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                         }`}
                         aria-pressed={iconMode === 'svg'}
                         aria-label={iconMode === 'svg' ? '恢复 emoji 图标' : '切换为 SVG 图标'}
@@ -155,8 +155,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         disabled={refreshing}
                         className={`flex min-w-fit items-center justify-center gap-1 rounded-2xl border-2 border-b-4 px-2.5 py-1.5 text-xs font-bold transition-colors disabled:opacity-60 sm:min-w-[2.5rem] lg:min-w-[4.5rem] sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
                             isDark
-                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-[#58cc02] hover:text-[#58cc02]'
-                            : 'bg-white border-gray-200 text-gray-600 hover:border-[#58cc02] hover:text-[#58cc02]'
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600 hover:text-slate-100'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                         }`}
                     >
                         {refreshing ? (

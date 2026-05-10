@@ -454,7 +454,7 @@ export function HeatmapChart({ userData, iconMode, forceViewMode }: Props): Reac
             <>
               <div
                 ref={tooltipRef}
-                className="fixed z-[9999] bg-white text-gray-700 rounded-xl shadow-xl border border-gray-200 p-3 w-[180px]"
+                className="fixed z-[9999] bg-white text-gray-700 rounded-xl shadow-xl border border-gray-200 p-3 w-[180px] transition-all duration-200 ease-out"
                 style={{
                   left: `${tooltip.x}px`,
                   top: tooltip.showBelow ? `${tooltip.y}px` : `${tooltip.y}px`,
@@ -508,7 +508,7 @@ export function HeatmapChart({ userData, iconMode, forceViewMode }: Props): Reac
                 </div>
 
                 <div
-                  className={`absolute w-0 h-0 border-l-[6px] border-r-[6px] border-transparent ${tooltip.showBelow
+                  className={`absolute w-0 h-0 border-l-[6px] border-r-[6px] border-transparent transition-all duration-200 ease-out ${tooltip.showBelow
                     ? 'top-[-6px] border-b-[6px] border-b-white'
                     : 'bottom-[-6px] border-t-[6px] border-t-white'
                     }`}

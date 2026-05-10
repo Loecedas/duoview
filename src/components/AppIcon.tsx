@@ -72,7 +72,8 @@ const ICON_SHELL_CLASS_NAME =
 const SVG_INNER_CLASS_NAME = 'h-full w-full overflow-visible';
 const SVG_DEFAULT_SCALE = 'scale(1.26)';
 const SVG_SCALE_MAP: Partial<Record<IconName, string>> = {
-  flame: 'scale(1.7)',
+  flame: 'scale(1.26) translateY(1.5px)',
+  crown: 'scale(1.26) translateY(1px)',
 };
 
 function hasExplicitColorClass(className?: string): boolean {

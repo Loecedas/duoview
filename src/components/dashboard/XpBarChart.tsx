@@ -152,7 +152,6 @@ export function XpBarChart({ userData, theme = 'light', isPrinting = false, icon
                 footerLabel="本周共获得"
                 footerValue={`${weeklyXp.toLocaleString()} XP`}
                 unit="XP"
-                refValue={userData.dailyGoal || avgXp}
                 isDark={isDark}
                 isPrinting={isPrinting}
             />
