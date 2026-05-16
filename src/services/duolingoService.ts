@@ -13,7 +13,7 @@ const SUBJECT_MAP: Record<string, string> = {
   "music": "音乐"
 };
 
-const LANGUAGE_MAP: Record<string, string> = {
+export const LANGUAGE_MAP: Record<string, string> = {
   'en': '英语',
   'ja': '日语',
   'ko': '韩语',

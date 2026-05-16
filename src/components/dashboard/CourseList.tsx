@@ -1,5 +1,6 @@
 import type { Course } from '../../types';
 import { t } from '../../utils/i18n';
+import { LANGUAGE_MAP } from '../../services/duolingoService';
 
 const CHART_COLORS = ['#58cc02', '#ce82ff', '#ff9600', '#ff4b4b', '#1cb0f6', '#ffc800'];
 
@@ -39,7 +40,14 @@ export function CourseList({ courses, seq = 5 }: CourseListProps): React.ReactEl
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <span className="font-bold text-gray-700 text-sm truncate">{course.title}</span>
+                    <span className="font-bold text-gray-700 text-sm truncate">
+                      {course.title}
+                      {course.fromLanguage && LANGUAGE_MAP[course.fromLanguage] && (
+                        <span className="text-gray-400 font-normal ml-0.5 text-xs">
+                          ({LANGUAGE_MAP[course.fromLanguage]})
+                        </span>
+                      )}
+                    </span>
                   </div>
 
                   <div className="flex items-baseline gap-1 mb-2">

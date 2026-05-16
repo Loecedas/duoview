@@ -118,21 +118,30 @@ export const translations = {
 export function getSystemLanguage(): Language {
   // 1. 尝试从 HTML 标签获取（由 Layout.astro 设置）
   if (typeof document !== 'undefined') {
-    const htmlLang = document.documentElement.lang;
-    if (htmlLang.startsWith('zh')) return 'zh-CN';
-    if (htmlLang.startsWith('en')) return 'en-US';
+    const htmlLang = document.documentElement.getAttribute('lang') || document.documentElement.lang;
+    if (htmlLang) {
+      const lowerLang = htmlLang.toLowerCase();
+      if (lowerLang.startsWith('zh')) return 'zh-CN';
+      if (lowerLang.startsWith('en')) return 'en-US';
+    }
   }
 
   // 2. 尝试从浏览器 navigator 获取
   if (typeof navigator !== 'undefined') {
-    const lang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
-    if (lang.startsWith('zh')) return 'zh-CN';
-    return 'en-US';
+    // 优先检查所有首选语言
+    const navLangs = navigator.languages || [navigator.language || (navigator as any).userLanguage];
+    for (const l of navLangs) {
+      if (!l) continue;
+      const lang = l.toLowerCase();
+      if (lang.startsWith('zh')) return 'zh-CN';
+      if (lang.startsWith('en')) return 'en-US';
+    }
   }
 
-  // 3. 服务端渲染默认返回 zh-CN (与 Layout.astro 一致)
+  // 3. 服务端渲染或无法检测时，默认返回 zh-CN (主要受众)
   return 'zh-CN';
 }
+
 
 /**
  * 翻译函数

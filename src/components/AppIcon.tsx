@@ -81,9 +81,11 @@ const ICON_SHELL_CLASS_NAME =
 const SVG_INNER_CLASS_NAME = 'h-full w-full overflow-visible';
 const SVG_DEFAULT_SCALE = 'scale(1.26)';
 const SVG_SCALE_MAP: Partial<Record<IconName, string>> = {
-  flame: 'scale(1.26) translateY(1.5px)',
-  crown: 'scale(1.26) translateY(1px)',
+  flame: 'scale(1.26)',
+  crown: 'scale(1.5) translateY(1.8px)',
 };
+
+
 
 function hasExplicitColorClass(className?: string): boolean {
   if (!className) return false;
@@ -98,6 +100,7 @@ function createSvg(
   children: React.ReactNode,
   className?: string,
   label?: string,
+  strokeWidth: string | number = '2.15',
 ): React.ReactElement {
   const colorStyle = hasExplicitColorClass(className)
     ? undefined
@@ -118,7 +121,7 @@ function createSvg(
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2.15"
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
         shapeRendering="geometricPrecision"
@@ -141,15 +144,18 @@ function renderSvg(name: IconName, className?: string, label?: string): React.Re
       return createSvg(
         name,
         <>
-          <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v14H7.5A2.5 2.5 0 0 0 5 19.5V5.5Z" />
-          <path d="M5 5.5V19.5" />
-          <path d="M8 7h8" />
-          <path d="M8 11h8" />
-          <path d="M8 15h6" />
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          <path d="M10 7h6" />
+          <path d="M10 11h6" />
         </>,
         className,
         label,
       );
+
+
+
+
     case 'calendar':
       return createSvg(
         name,
@@ -185,13 +191,12 @@ function renderSvg(name: IconName, className?: string, label?: string): React.Re
     case 'crown':
       return createSvg(
         name,
-        <>
-          <path d="m4 18 2-10 5 4 5-7 2 13H4Z" />
-          <path d="M6 18h12" />
-        </>,
+        <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z" />,
         className,
         label,
+        1.8,
       );
+
     case 'desktop':
       return createSvg(
         name,
@@ -206,10 +211,16 @@ function renderSvg(name: IconName, className?: string, label?: string): React.Re
     case 'flame':
       return createSvg(
         name,
-        <path d="M12 3c1.8 2.6 4.5 4.3 4.5 8a4.5 4.5 0 1 1-9 0c0-1.9 1-3.4 2.3-4.9.8 1.6 1.6 2.4 2.2 2.9C12.8 7.4 13 5.7 12 3Z" />,
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />,
         className,
         label,
       );
+
+
+
+
+
+
     case 'hourglass':
       return createSvg(
         name,

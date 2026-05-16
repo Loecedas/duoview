@@ -71,15 +71,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* 桌面端中心位置或移动端靠右的操作区 */}
                 <div className="flex items-center gap-1.5 ml-auto lg:ml-0">
                     {/* 刷新时间显示 (仅桌面端) */}
-                    <div className="hidden xl:flex items-center">
-                        <span className={`text-[11px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                    <div className="hidden xl:flex items-center h-8">
+                        <span className={`text-[11px] font-bold tabular-nums whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                             {getUpdateStatusText()}
                         </span>
                     </div>
 
-                    {/* 移动端图标显示（仅在窄屏下显示在中间或靠右） */}
-                    <div className="hidden lg:block">
-                        <AppIcon name="duolingo" mode={iconMode} className="w-8 h-8" />
+                    {/* 移动端图标显示（仅在窄屏下显示） */}
+                    <div className="lg:hidden flex items-center justify-center w-8 h-8">
+                        <AppIcon name="duolingo" mode={iconMode} className="w-6 h-6" />
                     </div>
                     
                     {/* 操作按钮组 */}
@@ -93,13 +93,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setThemeOpen(o => !o)}
-                                className={`flex items-center gap-1.5 transition-colors text-xs font-bold sm:gap-2 sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-l-[14px] lg:rounded-2xl lg:border-2 lg:border-b-4 ${
+                                className={`flex items-center gap-1.5 transition-colors text-xs font-bold sm:gap-2 sm:text-sm px-2.5 sm:px-4 h-[34px] sm:h-10 lg:h-[42px] lg:min-w-[90px] rounded-l-[14px] lg:rounded-2xl lg:border-2 lg:border-b-4 ${
                                     isDark
                                     ? 'text-slate-200 hover:bg-slate-700 lg:bg-slate-800 lg:border-slate-700 lg:hover:bg-slate-700 lg:hover:border-slate-600 lg:hover:text-slate-100'
                                     : 'text-gray-600 hover:bg-gray-50 lg:bg-white lg:border-gray-200 lg:hover:bg-gray-50 lg:hover:border-gray-300 lg:hover:text-gray-800'
                                 }`}
                             >
-                                <AppIcon name={themeIcon[theme]} mode={iconMode} className="text-current text-sm sm:text-base" />
+                                <div className="flex-shrink-0 flex items-center justify-center w-5 sm:w-6">
+                                    <AppIcon name={themeIcon[theme]} mode={iconMode} className="text-current text-sm sm:text-base" />
+                                </div>
                                 <span className="hidden lg:inline">{t('nav.theme')}</span>
                             </button>
                             {themeOpen && (
@@ -136,27 +138,31 @@ export const Navbar: React.FC<NavbarProps> = ({
                             type="button"
                             onClick={handleShare}
                             disabled={sharing}
-                            className={`flex items-center gap-1.5 transition-colors disabled:opacity-60 text-xs font-bold sm:gap-2 sm:px-4 sm:py-2 sm:text-sm px-3 py-1.5 lg:rounded-2xl lg:border-2 lg:border-b-4 ${
+                            className={`flex items-center gap-1.5 transition-colors disabled:opacity-60 text-xs font-bold sm:gap-2 sm:text-sm px-2.5 sm:px-4 h-[34px] sm:h-10 lg:h-[42px] lg:min-w-[90px] lg:rounded-2xl lg:border-2 lg:border-b-4 ${
                                 isDark
                                 ? 'text-slate-200 hover:bg-slate-700 lg:bg-slate-800 lg:border-slate-700 lg:hover:bg-slate-700 lg:hover:border-slate-600 lg:hover:text-slate-100'
                                 : 'text-gray-600 hover:bg-gray-50 lg:bg-white lg:border-gray-200 lg:hover:bg-gray-50 lg:hover:border-gray-300 lg:hover:text-gray-800'
                             }`}
                             >
-                            <AppIcon name="camera" mode={iconMode} className={`text-current text-sm sm:text-base ${sharing ? 'animate-spin' : ''}`} />
+                            <div className="flex-shrink-0 flex items-center justify-center w-5 sm:w-6">
+                                <AppIcon name="camera" mode={iconMode} className={`text-current text-sm sm:text-base ${sharing ? 'animate-spin' : ''}`} />
+                            </div>
                             <span className="hidden lg:inline">{sharing ? '...' : t('nav.share')}</span>
                         </button>
 
                         <button
                             type="button"
                             onClick={toggleIconMode}
-                            className={`flex items-center gap-1.5 transition-colors text-xs font-bold sm:gap-2 sm:px-4 sm:py-2 sm:text-sm px-3 py-1.5 lg:rounded-2xl lg:border-2 lg:border-b-4 ${
+                            className={`flex items-center gap-1.5 transition-colors text-xs font-bold sm:gap-2 sm:text-sm px-2.5 sm:px-4 h-[34px] sm:h-10 lg:h-[42px] lg:min-w-[90px] lg:rounded-2xl lg:border-2 lg:border-b-4 ${
                                 isDark
                                 ? 'text-slate-200 hover:bg-slate-700 lg:bg-slate-800 lg:border-slate-700 lg:hover:bg-slate-700 lg:hover:border-slate-600 lg:hover:text-slate-100'
                                 : 'text-gray-600 hover:bg-gray-50 lg:bg-white lg:border-gray-200 lg:hover:bg-gray-50 lg:hover:border-gray-300 lg:hover:text-gray-800'
                             }`}
                             aria-pressed={iconMode === 'svg'}
                         >
-                            <AppIcon name="shapes" mode={iconMode} className="text-current text-sm sm:text-base" />
+                            <div className="flex-shrink-0 flex items-center justify-center w-5 sm:w-6">
+                                <AppIcon name="shapes" mode={iconMode} className="text-current text-sm sm:text-base" />
+                            </div>
                             <span className="hidden lg:inline w-[2rem] text-center">{t('nav.icon')}</span>
                         </button>
 
@@ -165,17 +171,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                             type="button"
                             onClick={() => fetchData(true)}
                             disabled={refreshing}
-                            className={`flex items-center justify-center gap-1 transition-colors disabled:opacity-60 text-xs font-bold sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-r-[14px] lg:rounded-2xl lg:border-2 lg:border-b-4 sm:min-w-[2.5rem] lg:min-w-[4.5rem] ${
+                            className={`flex items-center justify-center gap-1 transition-colors disabled:opacity-60 text-xs font-bold sm:text-sm px-2.5 sm:px-4 h-[34px] sm:h-10 lg:h-[42px] lg:min-w-[100px] rounded-r-[14px] lg:rounded-2xl lg:border-2 lg:border-b-4 ${
                                 isDark
                                 ? 'text-slate-200 hover:bg-slate-700 lg:bg-slate-800 lg:border-slate-700 lg:hover:bg-slate-700 lg:hover:border-slate-600 lg:hover:text-slate-100'
                                 : 'text-gray-600 hover:bg-gray-50 lg:bg-white lg:border-gray-200 lg:hover:bg-gray-50 lg:hover:border-gray-300 lg:hover:text-gray-800'
                             }`}
                         >
-                            {refreshing ? (
-                                <span className="inline-block w-3 h-3 border-2 border-gray-300 border-t-[#58cc02] rounded-full animate-spin sm:w-4 sm:h-4" />
-                            ) : (
-                                <AppIcon name="refresh" mode={iconMode} className="text-current text-sm sm:text-base" />
-                            )}
+                            <div className="flex-shrink-0 flex items-center justify-center w-5 sm:w-6">
+                                {refreshing ? (
+                                    <span className="inline-block w-3 h-3 border-2 border-gray-300 border-t-[#58cc02] rounded-full animate-spin sm:w-4 sm:h-4" />
+                                ) : (
+                                    <AppIcon name="refresh" mode={iconMode} className="text-current text-sm sm:text-base" />
+                                )}
+                            </div>
                             <span className="hidden lg:inline">{t('nav.refresh')}</span>
                         </button>
                     </div>

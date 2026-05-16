@@ -106,6 +106,35 @@ export default function DashboardApp({ username }: DashboardAppProps) {
         setThemeOpen(false);
     };
 
+    // Keyboard Esc support
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !sharing) {
+                if (themeOpen) {
+                    setThemeOpen(false);
+                } else {
+                    window.location.replace('/');
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    }, [sharing, themeOpen]);
+
+    // Mobile/Hardware back button support
+    useEffect(() => {
+        // Push a dummy state once on mount to intercept the hardware back button
+        window.history.pushState({ entry: true }, '');
+        
+        const handlePopState = (e: PopStateEvent) => {
+            // Redirect immediately to home
+            window.location.replace('/');
+        };
+        
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
     const themeIcon = { light: 'sun', dark: 'moon', system: 'desktop' } as const;
 
     const getUpdateStatusText = () => {
