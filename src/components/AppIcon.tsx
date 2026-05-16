@@ -18,7 +18,10 @@ export type IconName =
   | 'search'
   | 'shapes'
   | 'snowflake'
-  | 'sun';
+  | 'sun'
+  | 'chess'
+  | 'math'
+  | 'music';
 
 interface AppIconProps {
   name: IconName;
@@ -45,6 +48,9 @@ const EMOJI_MAP: Record<IconName, string> = {
   shapes: '🧩',
   snowflake: '❄️',
   sun: '☀️',
+  chess: '♟️',
+  math: '➗',
+  music: '🎵',
 };
 
 const DEFAULT_SVG_COLOR_MAP: Record<IconName, string> = {
@@ -65,6 +71,9 @@ const DEFAULT_SVG_COLOR_MAP: Record<IconName, string> = {
   shapes: '#8b5cf6',
   snowflake: '#38bdf8',
   sun: '#f59e0b',
+  chess: '#64748b',
+  math: '#1cb0f6',
+  music: '#ce82ff',
 };
 
 const ICON_SHELL_CLASS_NAME =
@@ -305,6 +314,41 @@ function renderSvg(name: IconName, className?: string, label?: string): React.Re
           <path d="M18.5 12h3" />
           <path d="m5.5 18.5 2.1-2.1" />
           <path d="m16.4 7.6 2.1-2.1" />
+        </>,
+        className,
+        label,
+      );
+    case 'chess':
+      return createSvg(
+        name,
+        <>
+          <path d="M5 20h14" />
+          <path d="M7 17h10" />
+          <path d="M12 17V7" />
+          <path d="M9 7h6" />
+          <path d="M12 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z" />
+        </>,
+        className,
+        label,
+      );
+    case 'math':
+      return createSvg(
+        name,
+        <>
+          <path d="M5 12h14" />
+          <circle cx="12" cy="7" r="1.5" />
+          <circle cx="12" cy="17" r="1.5" />
+        </>,
+        className,
+        label,
+      );
+    case 'music':
+      return createSvg(
+        name,
+        <>
+          <path d="M9 18V5l10 2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="16" cy="20" r="3" />
         </>,
         className,
         label,

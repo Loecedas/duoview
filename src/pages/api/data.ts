@@ -114,10 +114,10 @@ export const GET: APIRoute = async ({ request }) => {
         const userId = userData.id || userData.user_id || userData.tracking_properties?.user_id;
 
         if (userId && jwt) {
-            // 并行获取 xp 摘要和排行榜数据
-            // xp_summaries 端点需要认证，使用 JWT 单独请求
+            // 并行获取 xp 摘要、排行榜数据以及最新的 Ameba 课程数据
+            // xp_summaries 和 Ameba 接口都需要认证，使用 JWT
             const authHeaders: HeadersInit = { ...headers, 'Authorization': `Bearer ${jwt}` };
-            const [xpResult, lbResult] = await Promise.all([
+            const [xpResult, lbResult, amebaResult] = await Promise.all([
                 fetchWithTimeout(
                     `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/xp_summaries?startDate=1970-01-01`,
                     authHeaders, 12000
@@ -126,10 +126,26 @@ export const GET: APIRoute = async ({ request }) => {
                     `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/leaderboards?active=true`,
                     authHeaders, 10000
                 ),
+                fetchWithTimeout(
+                    `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}?fields=courses,currentCourse,fromLanguage,learningLanguage,trackingProperties`,
+                    authHeaders, 10000
+                ),
             ]);
             const xpData = xpResult.data as any;
             if (xpData?.summaries) userData._xpSummaries = xpData.summaries;
             if (lbResult.data) userData._leaderboardHistory = lbResult.data;
+            
+            // 合并 Ameba 接口的课程数据，这是支持新科目（数学、音乐、象棋）的关键
+            if (amebaResult.data) {
+                userData._amebaData = amebaResult.data;
+                // 如果 Ameba 返回了 courses，合并到主 userData 中供转换函数使用
+                if (amebaResult.data.courses) {
+                    userData.courses = [
+                        ...(userData.courses || []),
+                        ...amebaResult.data.courses
+                    ];
+                }
+            }
         }
 
         if (!userData || typeof userData !== 'object') {
@@ -137,6 +153,17 @@ export const GET: APIRoute = async ({ request }) => {
         }
 
         const transformed = transformDuolingoData(userData);
+
+        // 强力去重逻辑：强制执行“终极视觉去重”
+        if (transformed.courses?.length) {
+            const seen = new Map<string, any>();
+            transformed.courses.forEach(c => {
+                // 彻底去重：只看归一化标题
+                const normalizedTitle = (c.title || "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+                seen.set(normalizedTitle, c);
+            });
+            transformed.courses = Array.from(seen.values());
+        }
 
         if (cache.size >= MAX_CACHE_SIZE) {
             const oldestKey = cache.keys().next().value;

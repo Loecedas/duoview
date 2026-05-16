@@ -7,6 +7,50 @@ const LEAGUE_TIERS = [
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 const DEFAULT_TIMEZONE = 'Asia/Shanghai';
+const SUBJECT_MAP: Record<string, string> = {
+  "chess": "国际象棋",
+  "math": "数学",
+  "music": "音乐"
+};
+
+const LANGUAGE_MAP: Record<string, string> = {
+  'en': '英语',
+  'ja': '日语',
+  'ko': '韩语',
+  'zh': '中文',
+  'zh-CN': '中文',
+  'zh-HK': '粤语',
+  'es': '西班牙语',
+  'fr': '法语',
+  'de': '德语',
+  'it': '意大利语',
+  'ru': '俄语',
+  'pt': '葡萄牙语',
+  'tr': '土耳其语',
+  'vi': '越南语',
+  'th': '泰语',
+  'ar': '阿拉伯语',
+};
+
+/**
+ * 格式化课程标题为中文
+ */
+function formatCourseTitle(title: string, langCode?: string, subject?: string): string {
+  if (subject && SUBJECT_MAP[subject]) return SUBJECT_MAP[subject];
+  if (langCode && LANGUAGE_MAP[langCode]) return LANGUAGE_MAP[langCode];
+  
+  const lowerTitle = (title || "").toLowerCase();
+  if (lowerTitle.includes('english')) return '英语';
+  if (lowerTitle.includes('chinese') && lowerTitle.includes('cantonese')) return '粤语';
+  if (lowerTitle.includes('chinese')) return '中文';
+  if (lowerTitle.includes('japanese')) return '日语';
+  if (lowerTitle.includes('korean')) return '韩语';
+  if (lowerTitle.includes('spanish')) return '西班牙语';
+  if (lowerTitle.includes('french')) return '法语';
+  if (lowerTitle.includes('german')) return '德语';
+  
+  return title;
+}
 
 function normalizeUnixTs(ts: number): number {
   return ts < 10000000000 ? ts * 1000 : ts;
@@ -267,14 +311,21 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
   if (rawData.courses?.length) {
     courses = rawData.courses
       .filter((c: any) => (c.xp || 0) > 0 || c.current_learning)
-      .map(c => ({
-        title: c.title,
-        xp: c.xp,
-        fromLanguage: c.fromLanguage,
-        learningLanguage: c.learningLanguage,
-        crowns: c.crowns || 0,
-        id: c.id
-      }));
+      .map(c => {
+        const langCode = c.learningLanguage || c.subject;
+        const title = formatCourseTitle(c.title, langCode, c.subject);
+
+        return {
+          title: title,
+          xp: c.xp || 0,
+          fromLanguage: c.fromLanguage || 'en',
+          learningLanguage: c.learningLanguage || c.subject || 'unknown',
+          crowns: c.crowns || 0,
+          id: c.id || `${c.learningLanguage}-${c.fromLanguage}`,
+          subject: c.subject,
+          timeSpent: c.timeSpent || c.duration || 0
+        };
+      });
   }
 
   if (rawAny.languages?.length) {
@@ -282,7 +333,7 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
       .filter((l: any) => l.points > 0 || l.current_learning)
       .map((l: any) => ({
         id: l.language,
-        title: l.language_string,
+        title: formatCourseTitle(l.language_string, l.language),
         xp: l.points || 0,
         crowns: l.crowns || 0,
         fromLanguage: 'en',
@@ -311,23 +362,36 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
           crowns = langDetail.skills.reduce((acc: number, skill: any) =>
             acc + (skill.levels_finished || skill.crowns || skill.finishedLevels || 0), 0);
         }
+        const learningLanguage = langDetail.learning_language || langCode;
         return {
-          id: langDetail.learning_language || langCode,
-          title: langDetail.language_string,
+          id: learningLanguage,
+          title: formatCourseTitle(langDetail.language_string, learningLanguage),
           xp: langDetail.points || langDetail.level_progress || 0,
           crowns,
           fromLanguage: langDetail.from_language || 'en',
-          learningLanguage: langDetail.learning_language || langCode,
+          learningLanguage: learningLanguage,
         };
       });
   }
+  
+  // 最终去重：强制执行“终极视觉去重”
+  // 仅根据归一化后的标题进行去重，确保视觉上相同的项必然合并
+  const courseMap = new Map<string, Course>();
+  for (const c of courses) {
+    const normalizedTitle = (c.title || "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+    // 只要归一化标题一致，就视为同一科目，后入的数据（Ameba）会覆盖旧数据
+    courseMap.set(normalizedTitle, c);
+  }
+  courses = Array.from(courseMap.values());
 
   let learningLanguage = "None";
   if (rawData.language_data) {
     const current = Object.values(rawData.language_data).find(l => l.current_learning);
     learningLanguage = current?.language_string ?? courses[0]?.title ?? "None";
   } else if (rawData.currentCourse) {
-    learningLanguage = rawData.currentCourse.title;
+    // 兼容 Ameba currentCourse
+    const cur = rawData.currentCourse as any;
+    learningLanguage = (cur.subject ? SUBJECT_MAP[cur.subject] : cur.title) ?? courses[0]?.title ?? "None";
   } else if (courses.length > 0) {
     learningLanguage = courses[0].title;
   }
@@ -422,6 +486,18 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
     totalMinutes = Math.floor(totalSeconds / 60);
     hasRealTimeData = totalSeconds > 0;
   }
+
+  // 加上新科目中的 timeSpent (如果 xp_summaries 没统计到的话)
+  if (courses.some(c => (c.timeSpent || 0) > 0)) {
+    const amebaTimeSeconds = courses.reduce((acc, c) => acc + (c.timeSpent || 0), 0);
+    const amebaMinutes = Math.floor(amebaTimeSeconds / 60);
+    // 如果 Ameba 时间比 xp_summaries 显著多，可能代表 xp_summaries 漏统计了新科目
+    if (amebaMinutes > totalMinutes) {
+      totalMinutes = amebaMinutes;
+      hasRealTimeData = true;
+    }
+  }
+
   const estimatedLearningTime = hasRealTimeData
     ? `${Math.floor(totalMinutes / 60)}小时 ${totalMinutes % 60}分钟`
     : '暂无数据';

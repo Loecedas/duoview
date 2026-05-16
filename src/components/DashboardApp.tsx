@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { UserData } from '../types';
+import { t, getSystemLanguage } from '../utils/i18n';
 import { StatCard } from './dashboard/StatCard';
 import { CourseList } from './dashboard/CourseList';
 import { TodayOverview } from './dashboard/TodayOverview';
@@ -108,13 +109,13 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     const themeIcon = { light: 'sun', dark: 'moon', system: 'desktop' } as const;
 
     const getUpdateStatusText = () => {
-        if (refreshing) return '正在更新…';
-        if (!lastUpdated) return '尚未更新';
-        const timeStr = new Date(lastUpdated).toLocaleTimeString('zh-CN', {
+        if (refreshing) return t('nav.updating');
+        if (!lastUpdated) return t('nav.not_updated');
+        const timeStr = new Date(lastUpdated).toLocaleTimeString(getSystemLanguage(), {
             hour: '2-digit',
             minute: '2-digit',
         });
-        return `更新于 ${timeStr}`;
+        return t('nav.updated_at', { time: timeStr });
     };
 
     const handleShare = useCallback(async () => {
@@ -224,7 +225,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                 */}
                 <AppIcon name="parrot" mode="emoji" className="text-5xl animate-bounce" label="加载中" />
                 <p className="text-gray-600 font-bold text-lg">
-                    正在获取 <span className="text-[#1cb0f6]">{username}</span> 的学习数据…
+                    {t('dash.fetching', { username })}
                 </p>
                 <p className="text-gray-400 text-sm">（首次加载约需 5~10 秒）</p>
             </div>
@@ -311,7 +312,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                     <div className="animate-fade-in-up">
                         <div className="mb-3">
                             <h1 className="mb-2 break-words text-2xl font-extrabold text-gray-800 sm:text-3xl">
-                                {username} 的学习数据
+                                {t('dash.user_data', { username })}
                             </h1>
                             <p className="text-xs text-gray-500 sm:text-sm">
                                 已加入多邻国 <span className="font-bold text-gray-700">{userData.accountAgeDays}</span> 天

@@ -5,6 +5,8 @@ export interface Course {
     learningLanguage: string;
     crowns: number;
     id: string;
+    subject?: string;
+    timeSpent?: number;
 }
 
 export interface UserData {

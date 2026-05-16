@@ -1,4 +1,5 @@
 import React from 'react';
+import { t, getSystemLanguage } from '../utils/i18n';
 import { AppIcon } from './AppIcon';
 import type { IconMode } from './useIconMode';
 import type { IconName } from './AppIcon';
@@ -57,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                         }`}
                     >
-                        ← 返回<span className="hidden sm:inline">首页</span>
+                        ← {t('nav.home')}
                     </a>
                 </div>
                 
@@ -66,13 +67,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <AppIcon name="parrot" mode="emoji" className="text-xl sm:text-2xl" label="DuoView" />
                     <span className="text-base font-black text-[#58cc02] sm:text-lg lg:text-xl hidden sm:inline">DuoView</span>
                 </div>
-
-                {/* 右侧：操作区 */}
-                <div className="flex items-center gap-1.5 sm:gap-2 z-10">
-                    <div className="hidden xl:flex items-center px-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-gray-600'}`} aria-live="polite">
+                
+                {/* 桌面端中心位置或移动端靠右的操作区 */}
+                <div className="flex items-center gap-1.5 ml-auto lg:ml-0">
+                    {/* 刷新时间显示 (仅桌面端) */}
+                    <div className="hidden xl:flex items-center">
+                        <span className={`text-[11px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                             {getUpdateStatusText()}
                         </span>
+                    </div>
+
+                    {/* 移动端图标显示（仅在窄屏下显示在中间或靠右） */}
+                    <div className="hidden lg:block">
+                        <AppIcon name="duolingo" mode={iconMode} className="w-8 h-8" />
                     </div>
                     
                     {/* 操作按钮组 */}
@@ -93,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 }`}
                             >
                                 <AppIcon name={themeIcon[theme]} mode={iconMode} className="text-current text-sm sm:text-base" />
-                                <span className="hidden lg:inline">主题</span>
+                                <span className="hidden lg:inline">{t('nav.theme')}</span>
                             </button>
                             {themeOpen && (
                                 <div className={`absolute right-0 top-full mt-2 z-50 min-w-[130px] overflow-hidden rounded-2xl border-2 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 ${
@@ -101,23 +108,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                                     ? 'bg-slate-800 border-slate-700'
                                     : 'bg-white border-gray-200'
                                 }`}>
-                                    {(['light', 'dark', 'system'] as const).map(t => (
+                                    {(['light', 'dark', 'system'] as const).map(t_key => (
                                         <button
                                             type="button"
-                                            key={t}
+                                            key={t_key}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                changeTheme(t);
+                                                changeTheme(t_key);
                                             }}
                                             className={`flex w-full items-center gap-2 px-4 py-2.5 text-sm font-bold transition-colors ${
                                                 isDark
-                                                ? `hover:bg-slate-700 ${theme === t ? 'text-slate-100 font-extrabold' : 'text-slate-300'}`
-                                                : `hover:bg-gray-50 ${theme === t ? 'text-gray-900 font-extrabold' : 'text-gray-600'}`
+                                                ? `hover:bg-slate-700 ${theme === t_key ? 'text-slate-100 font-extrabold' : 'text-slate-300'}`
+                                                : `hover:bg-gray-50 ${theme === t_key ? 'text-gray-900 font-extrabold' : 'text-gray-600'}`
                                             }`}
                                         >
-                                            <AppIcon name={themeIcon[t]} mode={iconMode} className="text-current text-base" />
-                                            {t === 'light' ? '浅色' : t === 'dark' ? '深色' : '系统'}
-                                            {theme === t && <span className="ml-auto">✓</span>}
+                                            <AppIcon name={themeIcon[t_key]} mode={iconMode} className="text-current text-base" />
+                                            {t_key === 'light' ? t('theme.light') : t_key === 'dark' ? t('theme.dark') : t('theme.system')}
+                                            {theme === t_key && <span className="ml-auto">✓</span>}
                                         </button>
                                     ))}
                                 </div>
@@ -136,7 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             }`}
                             >
                             <AppIcon name="camera" mode={iconMode} className={`text-current text-sm sm:text-base ${sharing ? 'animate-spin' : ''}`} />
-                            <span className="hidden lg:inline">{sharing ? '截图中' : '分享'}</span>
+                            <span className="hidden lg:inline">{sharing ? '...' : t('nav.share')}</span>
                         </button>
 
                         <button
@@ -148,10 +155,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 : 'text-gray-600 hover:bg-gray-50 lg:bg-white lg:border-gray-200 lg:hover:bg-gray-50 lg:hover:border-gray-300 lg:hover:text-gray-800'
                             }`}
                             aria-pressed={iconMode === 'svg'}
-                            aria-label={iconMode === 'svg' ? '恢复 emoji 图标' : '切换为 SVG 图标'}
                         >
                             <AppIcon name="shapes" mode={iconMode} className="text-current text-sm sm:text-base" />
-                            <span className="hidden lg:inline w-[2rem] text-center">图标</span>
+                            <span className="hidden lg:inline w-[2rem] text-center">{t('nav.icon')}</span>
                         </button>
 
                         {/* 刷新按钮 */}
@@ -170,10 +176,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                             ) : (
                                 <AppIcon name="refresh" mode={iconMode} className="text-current text-sm sm:text-base" />
                             )}
-                            <span className="hidden lg:inline">刷新</span>
+                            <span className="hidden lg:inline">{t('nav.refresh')}</span>
                         </button>
                     </div>
-
                 </div>
             </div>
         </nav>
