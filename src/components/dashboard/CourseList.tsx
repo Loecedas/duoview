@@ -60,7 +60,7 @@ export function CourseList({ courses, seq = 5 }: CourseListProps): React.ReactEl
           </div>
         </div>
       ) : (
-        <div className="text-gray-500 text-sm text-center py-6">暂无课程数据</div>
+        <div className="text-gray-500 text-sm text-center py-6">{t('status.no_data')}</div>
       )}
     </div>
   );

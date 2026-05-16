@@ -10,6 +10,14 @@ export const translations = {
     'nav.updating': '正在更新...',
     'nav.not_updated': '尚未更新',
     'nav.updated_at': '更新于 {time}',
+    'hero.title': '查看任意用户的学习数据',
+    'hero.subtitle': '无需登录 · 输入用户名 · 秒速生成仪表盘',
+    'hero.label': '多邻国用户名 / ID',
+    'hero.placeholder': '输入用户名…',
+    'hero.submit': '查看学习数据 →',
+    'hero.redirecting': '正在跳转…',
+    'hero.examples': '试试这些用户：',
+    'hero.footer': 'DuoView 是非官方工具，与 Duolingo 公司无关 · 数据来自公开的多邻国 API',
     'dash.distribution': '语言分布',
     'dash.total_courses': '共 {count} 门课程',
     'dash.overview': '今日概览',
@@ -26,6 +34,16 @@ export const translations = {
     'dash.heatmap': '年度学习热力图',
     'dash.user_data': '{username} 的学习数据',
     'dash.fetching': '正在获取 {username} 的学习数据...',
+    'dash.loading_tip': '（首次加载约需 5~10 秒）',
+    'dash.loading_label': '加载中',
+    'dash.joined_days': '已加入多邻国 {days} 天',
+    'dash.learning_focus': '当前重点：{language}',
+    'dash.sharing_title': '正在为您生成分享图...',
+    'dash.sharing_tip': '为了保证图表完整，请稍等片刻',
+    'error.back': '返回首页',
+    'error.user_not_found': '找不到该用户',
+    'error.user_not_found_tip': '用户名 {username} 不存在，或该用户资料已设置为私密。',
+    'error.reenter': '重新输入用户名',
     'theme.light': '浅色',
     'theme.dark': '深色',
     'theme.system': '系统',
@@ -35,6 +53,7 @@ export const translations = {
     'unit.year': '年',
     'status.loading': '正在加载数据...',
     'status.error': '数据加载失败',
+    'status.no_data': '暂无数据',
   },
   'en-US': {
     'nav.home': 'Home',
@@ -45,6 +64,14 @@ export const translations = {
     'nav.updating': 'Updating...',
     'nav.not_updated': 'Not updated',
     'nav.updated_at': 'Updated at {time}',
+    'hero.title': 'View any user\'s learning data',
+    'hero.subtitle': 'No login required · Enter username · Instant dashboard',
+    'hero.label': 'Duolingo Username / ID',
+    'hero.placeholder': 'Enter username...',
+    'hero.submit': 'View Data →',
+    'hero.redirecting': 'Redirecting...',
+    'hero.examples': 'Try these users:',
+    'hero.footer': 'DuoView is an unofficial tool, not affiliated with Duolingo. Data from public API.',
     'dash.distribution': 'Language Distribution',
     'dash.total_courses': '{count} Courses Total',
     'dash.overview': 'Daily Overview',
@@ -61,6 +88,16 @@ export const translations = {
     'dash.heatmap': 'Annual Learning Heatmap',
     'dash.user_data': "{username}'s Learning Data",
     'dash.fetching': 'Fetching {username}\'s Learning Data...',
+    'dash.loading_tip': '(First load takes ~5-10s)',
+    'dash.loading_label': 'Loading',
+    'dash.joined_days': 'Joined Duolingo for {days} days',
+    'dash.learning_focus': 'Focus: {language}',
+    'dash.sharing_title': 'Generating share image...',
+    'dash.sharing_tip': 'Please wait a moment for the charts to render',
+    'error.back': 'Back to Home',
+    'error.user_not_found': 'User Not Found',
+    'error.user_not_found_tip': 'User {username} does not exist or profile is private.',
+    'error.reenter': 'Re-enter Username',
     'theme.light': 'Light',
     'theme.dark': 'Dark',
     'theme.system': 'System',
@@ -70,16 +107,31 @@ export const translations = {
     'unit.year': 'y',
     'status.loading': 'Loading data...',
     'status.error': 'Failed to load data',
+    'status.no_data': 'No data available',
   }
 };
 
 /**
  * 获取系统语言
+ * 优先从 HTML lang 属性获取，以确保 SSR 和客户端注水一致
  */
 export function getSystemLanguage(): Language {
-  if (typeof navigator === 'undefined') return 'zh-CN';
-  const lang = navigator.language || (navigator as any).userLanguage;
-  return lang.startsWith('zh') ? 'zh-CN' : 'en-US';
+  // 1. 尝试从 HTML 标签获取（由 Layout.astro 设置）
+  if (typeof document !== 'undefined') {
+    const htmlLang = document.documentElement.lang;
+    if (htmlLang.startsWith('zh')) return 'zh-CN';
+    if (htmlLang.startsWith('en')) return 'en-US';
+  }
+
+  // 2. 尝试从浏览器 navigator 获取
+  if (typeof navigator !== 'undefined') {
+    const lang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
+    if (lang.startsWith('zh')) return 'zh-CN';
+    return 'en-US';
+  }
+
+  // 3. 服务端渲染默认返回 zh-CN (与 Layout.astro 一致)
+  return 'zh-CN';
 }
 
 /**

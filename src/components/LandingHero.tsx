@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AppIcon } from './AppIcon';
 import { useIconMode } from './useIconMode';
+import { t } from '../utils/i18n';
 
 export default function LandingHero() {
     const [username, setUsername] = useState('');
@@ -49,23 +50,23 @@ export default function LandingHero() {
                     <AppIcon name="parrot" mode="emoji" className="text-4xl" label="DuoView" />
                     <span className="text-4xl font-black text-[#58cc02] tracking-tight">DuoView</span>
                 </div>
-                <p className="text-gray-500 text-sm font-semibold tracking-wider uppercase">多邻国学习数据查看器</p>
+                <p className="text-gray-500 text-sm font-semibold tracking-wider uppercase">{t('nav.home').replace('返回 ', '')} · 多邻国学习数据查看器</p>
             </div>
 
             {/* Card */}
             <div className="w-full max-w-md animate-fade-in-up delay-1">
                 <div className="bg-white rounded-3xl shadow-lg border-2 border-b-4 border-gray-200 p-8">
                     <h1 className="text-2xl font-extrabold text-gray-800 mb-2 text-center">
-                        查看任意用户的学习数据
+                        {t('hero.title')}
                     </h1>
                     <p className="text-gray-500 text-sm text-center mb-8">
-                        无需登录 · 输入用户名 · 秒速生成仪表盘
+                        {t('hero.subtitle')}
                     </p>
 
                     <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
                         <div>
                             <label htmlFor="username" className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-                                多邻国用户名 / ID
+                                {t('hero.label')}
                             </label>
                             <input
                                 id="username"
@@ -74,7 +75,7 @@ export default function LandingHero() {
                                 autoComplete="off"
                                 value={username}
                                 onChange={e => setUsername(e.target.value)}
-                                placeholder="输入用户名…"
+                                placeholder={t('hero.placeholder')}
                                 className="w-full px-4 py-3.5 rounded-2xl border-2 border-b-4 border-gray-200 focus:border-[#1cb0f6] outline-none text-gray-800 font-bold text-base transition-colors placeholder:text-gray-400 placeholder:font-normal"
                             />
                         </div>
@@ -87,12 +88,12 @@ export default function LandingHero() {
                             {loading ? (
                                 <>
                                     <AppIcon name="hourglass" mode={iconMode} className="text-white animate-spin" />
-                                    正在跳转…
+                                    {t('hero.redirecting')}
                                 </>
                             ) : (
                                 <>
                                     <AppIcon name="search" mode={iconMode} className="text-white" />
-                                    查看学习数据 →
+                                    {t('hero.submit')}
                                 </>
                             )}
                         </button>
@@ -102,7 +103,7 @@ export default function LandingHero() {
 
             {/* Examples */}
             <div className="mt-6 animate-fade-in-up delay-2 text-center">
-                <span className="text-gray-400 text-sm">试试这些用户：</span>
+                <span className="text-gray-400 text-sm">{t('hero.examples')}</span>
                 <span className="ml-2 space-x-2">
                     {examples.map(ex => (
                         <button
@@ -122,7 +123,7 @@ export default function LandingHero() {
 
             {/* Footer */}
             <footer className="mt-16 animate-fade-in-up delay-3 text-center text-xs text-gray-400">
-                DuoView 是非官方工具，与 Duolingo 公司无关 · 数据来自公开的多邻国 API
+                {t('hero.footer')}
             </footer>
         </div>
     );

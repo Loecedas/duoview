@@ -223,11 +223,11 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                 {/*
                 <AppIcon name="parrot" mode={iconMode} className="text-5xl animate-bounce text-[#58cc02]" label="加载中" />
                 */}
-                <AppIcon name="parrot" mode="emoji" className="text-5xl animate-bounce" label="加载中" />
+                <AppIcon name="parrot" mode="emoji" className="text-5xl animate-bounce" label={t('dash.loading_label')} />
                 <p className="text-gray-600 font-bold text-lg">
                     {t('dash.fetching', { username })}
                 </p>
-                <p className="text-gray-400 text-sm">（首次加载约需 5~10 秒）</p>
+                <p className="text-gray-400 text-sm">{t('dash.loading_tip')}</p>
             </div>
         );
     }
@@ -241,13 +241,13 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                     href="/"
                     className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-white rounded-2xl border-2 border-b-4 border-gray-200 font-bold text-gray-600 hover:border-[#1cb0f6] hover:text-[#1cb0f6] transition-colors text-sm"
                 >
-                    ← 返回首页
+                    ← {t('error.back')}
                 </a>
                 <div className="text-center max-w-sm">
                     <AppIcon name="sad" mode={iconMode} className="mb-4 text-5xl text-red-400" label="错误" />
-                    <h2 className="text-xl font-extrabold text-gray-800 mb-2">找不到该用户</h2>
+                    <h2 className="text-xl font-extrabold text-gray-800 mb-2">{t('error.user_not_found')}</h2>
                     <p className="text-gray-500 text-sm mb-6">
-                        用户名 <span className="font-bold text-gray-700">{username}</span> 不存在，或该用户资料已设置为私密。
+                        {t('error.user_not_found_tip', { username })}
                     </p>
                     <p className="text-red-400 text-xs mb-6 bg-red-50 rounded-xl px-3 py-2">{error}</p>
                     <a
@@ -255,7 +255,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                         className="inline-flex items-center gap-2 px-6 py-3 bg-[#58cc02] hover:bg-[#46a300] text-white font-black rounded-2xl border-b-4 border-[#46a300] transition-colors"
                     >
                         <AppIcon name="search" mode={iconMode} className="text-white" />
-                        重新输入用户名
+                        {t('error.reenter')}
                     </a>
                 </div>
             </div>
@@ -280,9 +280,9 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                         <div className="h-20 w-20 animate-spin rounded-full border-4 border-gray-200 border-t-[#58cc02]" />
                         <AppIcon name="camera" mode={iconMode} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-[#58cc02]" />
                     </div>
-                    <p className="text-xl font-black text-gray-800 dark:text-white">正在为您生成分享图...</p>
+                    <p className="text-xl font-black text-gray-800 dark:text-white">{t('dash.sharing_title')}</p>
                     <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-gray-500">
-                        为了保证图表完整，请稍等片刻
+                        {t('dash.sharing_tip')}
                     </p>
                 </div>
             )}
@@ -315,8 +315,8 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                                 {t('dash.user_data', { username })}
                             </h1>
                             <p className="text-xs text-gray-500 sm:text-sm">
-                                已加入多邻国 <span className="font-bold text-gray-700">{userData.accountAgeDays}</span> 天
-                                · 当前重点：<span className="font-bold text-[#58cc02]">{userData.learningLanguage}</span>
+                                {t('dash.joined_days', { days: userData.accountAgeDays })}
+                                · {t('dash.learning_focus', { language: userData.learningLanguage })}
                             </p>
                             <div className="flex flex-wrap items-center gap-2 mt-3">
                                 {userData.isPlus && (
