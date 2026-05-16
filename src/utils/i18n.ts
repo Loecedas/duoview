@@ -1,4 +1,4 @@
-export type Language = 'zh-CN' | 'en-US';
+export type Language = 'zh-CN';
 
 export const translations = {
   'zh-CN': {
@@ -54,91 +54,14 @@ export const translations = {
     'status.loading': '正在加载数据...',
     'status.error': '数据加载失败',
     'status.no_data': '暂无数据',
-  },
-  'en-US': {
-    'nav.home': 'Home',
-    'nav.theme': 'Theme',
-    'nav.share': 'Share',
-    'nav.icon': 'Icon',
-    'nav.refresh': 'Refresh',
-    'nav.updating': 'Updating...',
-    'nav.not_updated': 'Not updated',
-    'nav.updated_at': 'Updated at {time}',
-    'hero.title': 'View any user\'s learning data',
-    'hero.subtitle': 'No login required · Enter username · Instant dashboard',
-    'hero.label': 'Duolingo Username / ID',
-    'hero.placeholder': 'Enter username...',
-    'hero.submit': 'View Data →',
-    'hero.redirecting': 'Redirecting...',
-    'hero.examples': 'Try these users:',
-    'hero.footer': 'DuoView is an unofficial tool, not affiliated with Duolingo. Data from public API.',
-    'dash.distribution': 'Language Distribution',
-    'dash.total_courses': '{count} Courses Total',
-    'dash.overview': 'Daily Overview',
-    'dash.recent_xp': 'Last 7 Days XP',
-    'dash.recent_time': 'Last 7 Days Learning Time',
-    'dash.total_xp': 'Total XP',
-    'dash.account_age': 'Account Age',
-    'dash.streak': 'Day Streak',
-    'dash.study_time': 'Study Minutes',
-    'dash.estimated_time': 'Estimated Time',
-    'dash.learning_courses': 'Courses',
-    'dash.today_xp': 'Today XP',
-    'dash.today_lessons': 'Today Lessons',
-    'dash.heatmap': 'Annual Learning Heatmap',
-    'dash.user_data': "{username}'s Learning Data",
-    'dash.fetching': 'Fetching {username}\'s Learning Data...',
-    'dash.loading_tip': '(First load takes ~5-10s)',
-    'dash.loading_label': 'Loading',
-    'dash.joined_days': 'Joined Duolingo for {days} days',
-    'dash.learning_focus': 'Focus: {language}',
-    'dash.sharing_title': 'Generating share image...',
-    'dash.sharing_tip': 'Please wait a moment for the charts to render',
-    'error.back': 'Back to Home',
-    'error.user_not_found': 'User Not Found',
-    'error.user_not_found_tip': 'User {username} does not exist or profile is private.',
-    'error.reenter': 'Re-enter Username',
-    'theme.light': 'Light',
-    'theme.dark': 'Dark',
-    'theme.system': 'System',
-    'unit.hour': 'h',
-    'unit.minute': 'm',
-    'unit.day': 'd',
-    'unit.year': 'y',
-    'status.loading': 'Loading data...',
-    'status.error': 'Failed to load data',
-    'status.no_data': 'No data available',
   }
 };
 
 /**
  * 获取系统语言
- * 优先从 HTML lang 属性获取，以确保 SSR 和客户端注水一致
+ * 已关闭监听，固定返回 zh-CN
  */
 export function getSystemLanguage(): Language {
-  // 1. 尝试从 HTML 标签获取（由 Layout.astro 设置）
-  if (typeof document !== 'undefined') {
-    const htmlLang = document.documentElement.getAttribute('lang') || document.documentElement.lang;
-    if (htmlLang) {
-      const lowerLang = htmlLang.toLowerCase();
-      if (lowerLang.startsWith('zh')) return 'zh-CN';
-      if (lowerLang.startsWith('en')) return 'en-US';
-    }
-  }
-
-  // 2. 尝试从浏览器 navigator 获取
-  if (typeof navigator !== 'undefined') {
-    // 优先检查所有首选语言
-    const navLangs = navigator.languages || [navigator.language || (navigator as any).userLanguage];
-    for (const l of navLangs) {
-      if (!l) continue;
-      const lang = l.toLowerCase();
-      if (lang.startsWith('zh')) return 'zh-CN';
-      if (lang.startsWith('en')) return 'en-US';
-    }
-  }
-
-  // 3. 服务端渲染或无法检测时，默认返回 zh-CN (主要受众)
   return 'zh-CN';
 }
 
@@ -148,7 +71,7 @@ export function getSystemLanguage(): Language {
  */
 export function t(key: keyof typeof translations['zh-CN'], params?: Record<string, any>): string {
   const lang = getSystemLanguage();
-  let text = translations[lang][key] || translations['zh-CN'][key] || key;
+  let text = translations[lang][key] || key;
   
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
@@ -158,3 +81,4 @@ export function t(key: keyof typeof translations['zh-CN'], params?: Record<strin
   
   return text;
 }
+

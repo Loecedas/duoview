@@ -1,5 +1,5 @@
 import React from 'react';
-import { t, getSystemLanguage } from '../utils/i18n';
+import { t } from '../utils/i18n';
 import { AppIcon } from './AppIcon';
 import type { IconMode } from './useIconMode';
 import type { IconName } from './AppIcon';
@@ -58,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                         }`}
                     >
-                        ← {t('nav.home')}
+                        ← <span className="hidden min-[400px]:inline">{t('nav.home')}</span>
                     </a>
                 </div>
                 

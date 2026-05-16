@@ -37,6 +37,7 @@ interface StatCardProps {
   isLargeText?: boolean;
 }
 
+
 export function StatCard({
   icon,
   iconMode,
@@ -52,20 +53,20 @@ export function StatCard({
   const delayClass = DELAY_CLASSES[Math.min(seq, 5)];
 
   return (
-    <div className={`bg-white rounded-2xl p-4 shadow-sm border-2 border-b-4 border-gray-200 animate-fade-in-up ${delayClass}`}>
+    <div className={`bg-white rounded-2xl p-3 sm:p-4 shadow-sm border-2 border-b-4 border-gray-200 animate-fade-in-up ${delayClass}`}>
       <div
-        className="text-2xl mb-1"
+        className="text-xl sm:text-2xl mb-1"
         style={iconColor ? { filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' } : undefined}
       >
         <AppIcon name={icon} mode={iconMode} />
       </div>
       <div
-        className={`${isLargeText ? 'text-2xl' : 'text-lg'} font-extrabold ${!valueColor ? colorClass : ''}`}
+        className={`${isLargeText ? 'text-lg sm:text-2xl' : 'text-base sm:text-lg'} font-extrabold ${!valueColor ? colorClass : ''}`}
         style={valueColor ? { color: valueColor } : undefined}
       >
         {value}
       </div>
-      <div className="text-xs text-gray-500 font-bold">{label}</div>
+      <div className="text-[10px] sm:text-xs text-gray-500 font-bold truncate">{label}</div>
     </div>
   );
 }

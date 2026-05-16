@@ -59,7 +59,7 @@ export function TodayOverview({ userData, iconMode, seq = 4 }: TodayOverviewProp
       </div>
 
       <div className="p-2 sm:p-3">
-        <div className="flex flex-col sm:flex-row max-[425px]:grid max-[425px]:grid-cols-2 gap-2 sm:gap-3 overflow-x-hidden">
+        <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 overflow-x-hidden">
           {/* 今日 XP */}
           <div className="max-[425px]:bg-[#f7fff2] bg-gray-50 rounded-xl p-4 sm:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all text-center flex-1 min-w-0 flex flex-col items-center justify-center">
             <div className="text-2xl sm:text-2xl font-black text-[#58cc02] order-1">

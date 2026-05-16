@@ -26,8 +26,8 @@ export function CourseList({ courses, seq = 5 }: CourseListProps): React.ReactEl
       </div>
 
       {courses.length > 0 ? (
-        <div className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3 overflow-x-auto md:overflow-x-visible pb-2 sm:pb-0">
+        <div className="p-3 sm:p-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 overflow-x-auto md:overflow-x-visible pb-2 sm:pb-0">
             {sortedCourses.map((course, idx) => {
               const percent = totalCourseXp > 0 ? ((course.xp / totalCourseXp) * 100).toFixed(1) : '0';
               const relativeWidth = maxCourseXp > 0 ? (course.xp / maxCourseXp) * 100 : 0;
@@ -36,24 +36,24 @@ export function CourseList({ courses, seq = 5 }: CourseListProps): React.ReactEl
               return (
                 <div
                   key={course.id}
-                  className="bg-gray-50 rounded-xl p-3 md:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all flex-1 min-w-0 sm:min-w-[180px] md:min-w-0"
+                  className="bg-gray-50 rounded-xl p-2.5 sm:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all flex-1 min-w-0 sm:min-w-[180px] md:min-w-0"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <span className="font-bold text-gray-700 text-sm truncate">
+                  <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                    <span className="font-bold text-gray-700 text-xs sm:text-sm truncate">
                       {course.title}
                       {course.fromLanguage && LANGUAGE_MAP[course.fromLanguage] && (
-                        <span className="text-gray-400 font-normal ml-0.5 text-xs">
+                        <span className="text-gray-400 font-normal ml-0.5 text-[10px] sm:text-xs">
                           ({LANGUAGE_MAP[course.fromLanguage]})
                         </span>
                       )}
                     </span>
                   </div>
 
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-xl font-black" style={{ color }}>{course.xp.toLocaleString()}</span>
-                    <span className="text-xs text-gray-400">XP</span>
-                    <span className="text-xs text-gray-500 ml-auto">{percent}%</span>
+                  <div className="flex items-baseline gap-1 mb-1.5 sm:mb-2">
+                    <span className="text-base sm:text-xl font-black" style={{ color }}>{course.xp.toLocaleString()}</span>
+                    <span className="text-[10px] text-gray-400">XP</span>
+                    <span className="text-[10px] sm:text-xs text-gray-500 ml-auto">{percent}%</span>
                   </div>
 
                   <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">

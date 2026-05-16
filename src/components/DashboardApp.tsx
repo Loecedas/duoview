@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { UserData } from '../types';
-import { t, getSystemLanguage } from '../utils/i18n';
+import { t } from '../utils/i18n';
 import { StatCard } from './dashboard/StatCard';
 import { CourseList } from './dashboard/CourseList';
 import { TodayOverview } from './dashboard/TodayOverview';
@@ -24,6 +24,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
     const [themeOpen, setThemeOpen] = useState(false);
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+    const isDark = resolvedTheme === 'dark';
     const dashboardRef = useRef<HTMLDivElement>(null);
     const themeRef = useRef<HTMLDivElement>(null);
     const { iconMode, toggleIconMode } = useIconMode();
@@ -140,7 +141,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     const getUpdateStatusText = () => {
         if (refreshing) return t('nav.updating');
         if (!lastUpdated) return t('nav.not_updated');
-        const timeStr = new Date(lastUpdated).toLocaleTimeString(getSystemLanguage(), {
+        const timeStr = new Date(lastUpdated).toLocaleTimeString('zh-CN', {
             hour: '2-digit',
             minute: '2-digit',
         });
@@ -301,16 +302,16 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     ];
 
     return (
-        <div className="min-h-screen bg-[#f0f4f8] dark:bg-slate-900" data-theme={resolvedTheme}>
+        <div className="min-h-screen bg-[#f0f4f8]" data-theme={resolvedTheme}>
             {/* 截图中的全屏遮罩 - 解决界面跳变问题 */}
             {sharing && (
-                <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-fade-in dark:bg-slate-900/80">
+                <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center backdrop-blur-sm animate-fade-in ${isDark ? 'bg-slate-900/80' : 'bg-white/80'}`}>
                     <div className="relative mb-6">
-                        <div className="h-20 w-20 animate-spin rounded-full border-4 border-gray-200 border-t-[#58cc02]" />
+                        <div className={`h-20 w-20 animate-spin rounded-full border-4 ${isDark ? 'border-slate-700' : 'border-gray-200'} border-t-[#58cc02]`} />
                         <AppIcon name="camera" mode={iconMode} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-[#58cc02]" />
                     </div>
-                    <p className="text-xl font-black text-gray-800 dark:text-white">{t('dash.sharing_title')}</p>
-                    <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-gray-500">
+                    <p className={`text-xl font-black ${isDark ? 'text-white' : 'text-gray-800'}`}>{t('dash.sharing_title')}</p>
+                    <p className={`mt-2 inline-flex items-center gap-1.5 text-sm font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                         {t('dash.sharing_tip')}
                     </p>
                 </div>
@@ -335,7 +336,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
 
 
             {/* Dashboard content — captured for share screenshot */}
-            <div className="px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8" data-theme={resolvedTheme}>
+            <div className="px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8">
                 <div ref={dashboardRef} className="max-w-7xl mx-auto bg-inherit">
                     {/* Page Header */}
                     <div className="animate-fade-in-up">
@@ -362,7 +363,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                         </div>
 
                         {/* Stat Cards */}
-                        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+                        <div className="mb-6 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
                             {statItems.map((item, i) => (
                                 <StatCard key={item.label} {...item} iconMode={iconMode} seq={i + 1} />
                             ))}
