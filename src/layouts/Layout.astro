@@ -22,8 +22,10 @@ import '../styles/global.css';
             document.body?.setAttribute('data-theme', resolved);
             if (resolved === 'dark') {
               document.documentElement.style.backgroundColor = '#0f172a';
+              document.documentElement.style.colorScheme = 'dark';
             } else {
               document.documentElement.style.backgroundColor = '#f0f4f8';
+              document.documentElement.style.colorScheme = 'light';
             }
           } catch {}
         }
@@ -35,6 +37,10 @@ import '../styles/global.css';
       html[data-theme="dark"], html[data-theme="dark"] body {
         background-color: #0f172a !important;
         color-scheme: dark;
+      }
+      html[data-theme="light"], html[data-theme="light"] body {
+        background-color: #f0f4f8 !important;
+        color-scheme: light;
       }
     </style>
     <title>DuoView · 多邻国学习数据查看器</title>

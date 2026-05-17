@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { navigate } from 'astro:transitions/client';
 import type { UserData } from '../types';
 import { t } from '../utils/i18n';
 import { StatCard } from './dashboard/StatCard';
@@ -84,6 +85,13 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', resolvedTheme);
         document.body.setAttribute('data-theme', resolvedTheme);
+        if (resolvedTheme === 'dark') {
+            document.documentElement.style.backgroundColor = '#0f172a';
+            document.documentElement.style.colorScheme = 'dark';
+        } else {
+            document.documentElement.style.backgroundColor = '#f0f4f8';
+            document.documentElement.style.colorScheme = 'light';
+        }
     }, [resolvedTheme]);
 
     // Close dropdown on outside click
@@ -110,11 +118,11 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     // Keyboard Esc support
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !sharing) {
+            if ((e.key === 'Escape' || e.key === 'Esc') && !sharing) {
                 if (themeOpen) {
                     setThemeOpen(false);
                 } else {
-                    window.location.replace('/');
+                    navigate('/');
                 }
             }
         };
@@ -128,8 +136,8 @@ export default function DashboardApp({ username }: DashboardAppProps) {
         window.history.pushState({ entry: true }, '');
         
         const handlePopState = (e: PopStateEvent) => {
-            // Redirect immediately to home
-            window.location.replace('/');
+            // Redirect smoothly to home
+            navigate('/');
         };
         
         window.addEventListener('popstate', handlePopState);

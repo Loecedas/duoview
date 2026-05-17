@@ -308,14 +308,43 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
 
   let courses: Course[] = [];
 
-  if (rawData.courses?.length) {
-    courses = rawData.courses
-      .filter((c: any) => (c.xp || 0) > 0 || c.current_learning)
-      .map(c => {
+  // --- Ameba Data Parsing (New Subjects Support) ---
+  const amebaData = rawAny._amebaData;
+  if (amebaData?.courses?.length) {
+    courses = amebaData.courses
+      .filter((c: any) => c.learningLanguage || c.subject || c.title)
+      .map((c: any) => {
         const langCode = c.learningLanguage || c.subject;
         const title = formatCourseTitle(c.title, langCode, c.subject);
 
+        let timeSpent = c.timeSpent || c.duration || 0;
+        if (timeSpent > 1000000) timeSpent = Math.floor(timeSpent / 1000);
+
         return {
+          title: title,
+          xp: c.xp || c.points || 0,
+          fromLanguage: c.fromLanguage || 'en',
+          learningLanguage: c.learningLanguage || c.subject || 'unknown',
+          crowns: c.crowns || 0,
+          id: c.id || c.courseId || `${c.learningLanguage}-${c.fromLanguage}`,
+          subject: c.subject,
+          timeSpent: Math.floor(timeSpent / 60)
+        };
+      });
+  }
+
+  // Fallback and legacy courses (Merge with Ameba courses if not already present)
+  if (rawData.courses?.length) {
+    rawData.courses.forEach((c: any) => {
+      const exists = courses.some(ac => 
+        (ac.id && c.id && ac.id === c.id) || 
+        (ac.learningLanguage === c.learningLanguage && ac.fromLanguage === c.fromLanguage)
+      );
+      if (!exists && (c.learningLanguage || c.subject || c.title)) {
+        const langCode = c.learningLanguage || c.subject;
+        const title = formatCourseTitle(c.title, langCode, c.subject);
+
+        courses.push({
           title: title,
           xp: c.xp || 0,
           fromLanguage: c.fromLanguage || 'en',
@@ -324,13 +353,14 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
           id: c.id || `${c.learningLanguage}-${c.fromLanguage}`,
           subject: c.subject,
           timeSpent: c.timeSpent || c.duration || 0
-        };
-      });
+        });
+      }
+    });
   }
 
   if (rawAny.languages?.length) {
     const v1Courses = rawAny.languages
-      .filter((l: any) => l.points > 0 || l.current_learning)
+      .filter((l: any) => l.language || l.language_string)
       .map((l: any) => ({
         id: l.language,
         title: formatCourseTitle(l.language_string, l.language),
@@ -341,21 +371,18 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
       }));
 
     for (const v1c of v1Courses) {
+      // 通过学习语言和 XP 是否相近来判断是否为同一个课程，防止误伤不同源语言的同名课程
       const exists = courses.some(c =>
-        c.title === v1c.title ||
-        c.learningLanguage === v1c.learningLanguage ||
-        (c.id && v1c.id && c.id.includes(v1c.id))
+        c.learningLanguage === v1c.learningLanguage &&
+        (Math.abs(c.xp - v1c.xp) < 5 || (c.fromLanguage === 'en' && v1c.fromLanguage === 'en'))
       );
       if (!exists) courses.push(v1c);
     }
   }
 
-  if (courses.length === 0 && rawData.language_data) {
-    courses = Object.entries(rawData.language_data)
-      .filter(([_, langDetail]: [string, any]) => {
-        const xp = langDetail.points || langDetail.level_progress || 0;
-        return xp > 0 || langDetail.current_learning;
-      })
+  if (rawData.language_data) {
+    const fallbackCourses = Object.entries(rawData.language_data)
+      .filter(([_, langDetail]: [string, any]) => langDetail.learning_language || _)
       .map(([langCode, langDetail]: [string, any]) => {
         let crowns = langDetail.crowns || 0;
         if (crowns === 0 && langDetail.skills?.length) {
@@ -372,15 +399,18 @@ export function transformDuolingoData(rawData: DuolingoRawUser): UserData {
           learningLanguage: learningLanguage,
         };
       });
+      
+    courses.push(...fallbackCourses);
   }
   
-  // 最终去重：强制执行“终极视觉去重”
-  // 仅根据归一化后的标题进行去重，确保视觉上相同的项必然合并
+  // 最终去重：结合归一化后的标题和源语言进行去重
+  // 确保用不同语言学习的同一种语言不会被错误合并
   const courseMap = new Map<string, Course>();
   for (const c of courses) {
     const normalizedTitle = (c.title || "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
-    // 只要归一化标题一致，就视为同一科目，后入的数据（Ameba）会覆盖旧数据
-    courseMap.set(normalizedTitle, c);
+    const key = `${normalizedTitle}-${c.fromLanguage || 'en'}`;
+    // 只要归一化标题和源语言一致，就视为同一科目，后入的数据（Ameba）会覆盖旧数据
+    courseMap.set(key, c);
   }
   courses = Array.from(courseMap.values());
 

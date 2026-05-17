@@ -69,83 +69,84 @@ export const GET: APIRoute = async ({ request }) => {
             'Sec-Fetch-Site': 'same-origin',
         };
 
-        // 并行获取所有用户数据接口（原串行 ~26s → 并行 ~10s）
-        const [v2Result, v1Result, api1Result] = await Promise.all([
-            fetchWithTimeout(
-                `${DUOLINGO_BASE_URL}/2017-06-30/users?username=${encodeURIComponent(username)}`,
-                headers, 10000
-            ),
-            fetchWithTimeout(
-                `${DUOLINGO_BASE_URL}/users/${encodeURIComponent(username)}`,
-                headers, 8000
-            ),
-            fetchWithTimeout(
-                `${DUOLINGO_BASE_URL}/api/1/users/show?username=${encodeURIComponent(username)}`,
-                headers, 8000
-            ),
-        ]);
+        // 1. 获取基础信息和 userId（这是最快的接口）
+        const v2Result = await fetchWithTimeout(
+            `${DUOLINGO_BASE_URL}/2017-06-30/users?username=${encodeURIComponent(username)}`,
+            headers, 8000
+        );
 
-        // 若 V2 返回 401/403，说明账号设置为私密或访问受限
         if (v2Result.status === 401 || v2Result.status === 403) {
             return jsonResponse({ error: '该账号设置为私密，无法访问', code: 'PRIVATE_ACCOUNT' }, 403);
         }
 
         const v2Raw = v2Result.data as { users?: any[] } | any;
         const v2Data = v2Raw?.users?.[0] || v2Raw;
-        const v1Data = v1Result.data as any;
-        const api1Data = api1Result.data as any;
 
-        if (!v2Data && !v1Data && !api1Data) {
+        if (!v2Data) {
             return jsonResponse({ error: '找不到该用户，请检查用户名是否正确' }, 404);
         }
 
-        // Deep merge: V2 takes priority, then api1, then V1
-        const userData = {
-            ...(v1Data || {}),
-            ...(api1Data || {}),
-            ...(v2Data || {}),
-            tracking_properties: {
-                ...(v1Data?.tracking_properties || v1Data?.trackingProperties || {}),
-                ...(api1Data?.tracking_properties || api1Data?.trackingProperties || {}),
-                ...(v2Data?.tracking_properties || v2Data?.trackingProperties || {})
-            }
-        } as any;
+        const userId = v2Data.id || v2Data.user_id;
+        
+        let userData = { ...v2Data } as any;
+        let hasAmebaCourses = false;
 
-        const userId = userData.id || userData.user_id || userData.tracking_properties?.user_id;
-
-        if (userId && jwt) {
-            // 并行获取 xp 摘要、排行榜数据以及最新的 Ameba 课程数据
-            // xp_summaries 和 Ameba 接口都需要认证，使用 JWT
-            const authHeaders: HeadersInit = { ...headers, 'Authorization': `Bearer ${jwt}` };
-            const [xpResult, lbResult, amebaResult] = await Promise.all([
-                fetchWithTimeout(
-                    `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/xp_summaries?startDate=1970-01-01`,
-                    authHeaders, 12000
-                ),
-                fetchWithTimeout(
-                    `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/leaderboards?active=true`,
-                    authHeaders, 10000
-                ),
+        // 2. 并发获取新版核心数据（Ameba 课程、经验摘要、排行榜）
+        if (userId) {
+            const authHeaders: HeadersInit = jwt ? { ...headers, 'Authorization': `Bearer ${jwt}` } : headers;
+            
+            const [amebaResult, xpResult, lbResult] = await Promise.all([
                 fetchWithTimeout(
                     `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}?fields=courses,currentCourse,fromLanguage,learningLanguage,trackingProperties`,
-                    authHeaders, 10000
+                    authHeaders, 8000
                 ),
+                jwt ? fetchWithTimeout(
+                    `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/xp_summaries?startDate=1970-01-01`,
+                    authHeaders, 8000
+                ) : Promise.resolve({ data: null, status: 200 }),
+                jwt ? fetchWithTimeout(
+                    `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/leaderboards?active=true`,
+                    authHeaders, 8000
+                ) : Promise.resolve({ data: null, status: 200 })
             ]);
-            const xpData = xpResult.data as any;
-            if (xpData?.summaries) userData._xpSummaries = xpData.summaries;
-            if (lbResult.data) userData._leaderboardHistory = lbResult.data;
-            
-            // 合并 Ameba 接口的课程数据，这是支持新科目（数学、音乐、象棋）的关键
+
             if (amebaResult.data) {
                 userData._amebaData = amebaResult.data;
-                // 如果 Ameba 返回了 courses，合并到主 userData 中供转换函数使用
-                if (amebaResult.data.courses) {
-                    userData.courses = [
-                        ...(userData.courses || []),
-                        ...amebaResult.data.courses
-                    ];
+                if (amebaResult.data.courses?.length > 0) {
+                    userData.courses = [...(userData.courses || []), ...amebaResult.data.courses];
+                    hasAmebaCourses = true;
                 }
             }
+
+            if (xpResult.data?.summaries) {
+                userData._xpSummaries = xpResult.data.summaries;
+            }
+            
+            if (lbResult.data) {
+                userData._leaderboardHistory = lbResult.data;
+            }
+        }
+
+        // 3. 只有在新版接口未能获取到课程数据时，才回退请求极其缓慢的旧版接口
+        if (!hasAmebaCourses) {
+            const [v1Result, api1Result] = await Promise.all([
+                fetchWithTimeout(`${DUOLINGO_BASE_URL}/users/${encodeURIComponent(username)}`, headers, 8000),
+                fetchWithTimeout(`${DUOLINGO_BASE_URL}/api/1/users/show?username=${encodeURIComponent(username)}`, headers, 8000)
+            ]);
+            
+            const v1Data = v1Result.data || {};
+            const api1Data = api1Result.data || {};
+            
+            userData = {
+                ...v1Data,
+                ...api1Data,
+                ...userData, // 保证 V2 数据的最高优先级
+                tracking_properties: {
+                    ...(v1Data.tracking_properties || v1Data.trackingProperties || {}),
+                    ...(api1Data.tracking_properties || api1Data.trackingProperties || {}),
+                    ...(userData.tracking_properties || userData.trackingProperties || {})
+                }
+            };
         }
 
         if (!userData || typeof userData !== 'object') {
@@ -154,16 +155,7 @@ export const GET: APIRoute = async ({ request }) => {
 
         const transformed = transformDuolingoData(userData);
 
-        // 强力去重逻辑：强制执行“终极视觉去重”
-        if (transformed.courses?.length) {
-            const seen = new Map<string, any>();
-            transformed.courses.forEach(c => {
-                // 彻底去重：只看归一化标题
-                const normalizedTitle = (c.title || "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
-                seen.set(normalizedTitle, c);
-            });
-            transformed.courses = Array.from(seen.values());
-        }
+
 
         if (cache.size >= MAX_CACHE_SIZE) {
             const oldestKey = cache.keys().next().value;
