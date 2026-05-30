@@ -43,7 +43,7 @@ function SingleAreaChart({
     isPrinting?: boolean;
 }) {
     return (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border-2 border-b-4 border-gray-200 flex flex-col gap-2">
+        <div className="chart-shell bg-white rounded-2xl p-4 shadow-sm border-2 border-b-4 border-gray-200 flex flex-col gap-2">
             <h2 className="flex min-h-6 items-center text-base font-bold leading-none text-gray-800">{title}</h2>
             <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={data} margin={{ top: 8, right: 4, left: -16, bottom: 0 }}>

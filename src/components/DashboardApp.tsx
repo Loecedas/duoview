@@ -10,6 +10,7 @@ import { HeatmapChart } from './dashboard/HeatmapChart';
 import { Navbar } from './Navbar';
 import { AppIcon } from './AppIcon';
 import { useIconMode } from './useIconMode';
+import type { IconName } from './AppIcon';
 
 interface DashboardAppProps {
     username: string;
@@ -36,8 +37,10 @@ export default function DashboardApp({ username }: DashboardAppProps) {
         else setLoading(true);
         setError(null);
         try {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             const res = await fetch(`/api/data?username=${encodeURIComponent(username)}`, {
-                signal: controller.signal
+                signal: controller.signal,
+                headers: timezone ? { 'x-user-timezone': timezone } : undefined
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || '获取数据失败');
@@ -302,7 +305,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
 
     if (!userData) return null;
 
-    const statItems = [
+    const statItems: Array<{ label: string; value: string | number; icon: IconName; color: string; bg: string }> = [
         { label: '预估投入时间', value: userData.estimatedLearningTime, icon: 'clock', color: '#a855f7', bg: 'bg-purple-50' },
         { label: '总经验', value: userData.totalXp.toLocaleString() + ' XP', icon: 'bolt', color: '#eab308', bg: 'bg-yellow-50' },
         { label: '学习课程', value: userData.courses.length, icon: 'books', color: '#58cc02', bg: 'bg-blue-50' },

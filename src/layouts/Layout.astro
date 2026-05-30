@@ -1,14 +1,14 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 ---
 <!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦜</text></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📘</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <ViewTransitions />
+    <ClientRouter />
     <script is:inline>
       (() => {
         function applyTheme() {
@@ -43,8 +43,8 @@ import '../styles/global.css';
         color-scheme: light;
       }
     </style>
-    <title>DuoView · 多邻国学习数据查看器</title>
-    <meta name="description" content="输入任意多邻国用户名，秒速生成专属学习仪表盘。" />
+    <title>DuoView - 多邻国学习数据查看器</title>
+    <meta name="description" content="输入任意多邻国用户名，快速生成专属学习仪表盘。" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   </head>

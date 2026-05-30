@@ -79,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* 移动端图标显示（仅在窄屏下显示） */}
                     <div className="lg:hidden flex items-center justify-center w-8 h-8">
-                        <AppIcon name="duolingo" mode={iconMode} className="w-6 h-6" />
+                        <AppIcon name="parrot" mode={iconMode} className="w-6 h-6" />
                     </div>
                     
                     {/* 操作按钮组 */}

@@ -10,6 +10,7 @@ export interface Course {
 }
 
 export interface UserData {
+    timezone?: string;
     streak: number;
     totalXp: number;
     courses: Course[];

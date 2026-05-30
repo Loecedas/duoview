@@ -62,3 +62,12 @@ body[data-theme="dark"] {
 .delay-3 { animation-delay: 0.15s; }
 .delay-4 { animation-delay: 0.20s; }
 .delay-5 { animation-delay: 0.25s; }
+
+.chart-shell :where(svg, g, path, rect, circle):focus {
+  outline: none;
+}
+
+.chart-shell :where([tabindex], button, [role="button"]):focus-visible {
+  outline: 2px solid #1cb0f6;
+  outline-offset: 2px;
+}
