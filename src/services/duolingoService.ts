@@ -314,7 +314,7 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
 
   const streak = rawData.site_streak ?? rawData.streak ?? 0;
 
-  let totalXp = rawData.total_xp ?? rawData.totalXp ?? 0;
+  let totalXp = rawAny._amebaData?.totalXp ?? rawData.total_xp ?? rawData.totalXp ?? 0;
   if (totalXp === 0) totalXp = sumPoints(rawData.languages);
   if (totalXp === 0 && rawData.language_data) totalXp = sumPoints(Object.values(rawData.language_data));
   if (totalXp === 0) totalXp = sumPoints(rawData.courses);
@@ -387,7 +387,6 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
       }));
 
     for (const v1c of v1Courses) {
-      // 通过学习语言和 XP 是否相近来判断是否为同一个课程，防止误伤不同源语言的同名课程
       const exists = courses.some(c =>
         c.learningLanguage === v1c.learningLanguage &&
         (Math.abs(c.xp - v1c.xp) < 5 || (c.fromLanguage === 'en' && v1c.fromLanguage === 'en'))
@@ -419,6 +418,9 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
     courses.push(...fallbackCourses);
   }
   
+  const coursesXpSum = courses.reduce((sum, c) => sum + (c.xp || 0), 0);
+  totalXp = Math.max(totalXp, coursesXpSum);
+
   // 最终去重：结合归一化后的标题和源语言进行去重
   // 确保用不同语言学习的同一种语言不会被错误合并
   const courseMap = new Map<string, Course>();
@@ -435,7 +437,6 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
     const current = Object.values(rawData.language_data).find(l => l.current_learning);
     learningLanguage = current?.language_string ?? courses[0]?.title ?? "None";
   } else if (rawData.currentCourse) {
-    // 兼容 Ameba currentCourse
     const cur = rawData.currentCourse as any;
     learningLanguage = (cur.subject ? SUBJECT_MAP[cur.subject] : cur.title) ?? courses[0]?.title ?? "None";
   } else if (courses.length > 0) {
@@ -515,33 +516,35 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
   const yearlyXpHistory: { date: string; xp: number; time?: number }[] = [];
   xpByDate.forEach((xp, date) => yearlyXpHistory.push({ date, xp, time: timeByDate.get(date) }));
 
-
-
   const { dateStr: creationDateStr, ageDays: accountAgeDays } = parseCreationDate(creationTs, rawData.created, timeZone);
 
   const hasInventoryPremium = rawAny.inventory?.premium_subscription || rawAny.inventory?.super_subscription;
   const hasItemPremium = rawAny.has_item_premium_subscription || rawAny.has_item_immersive_subscription;
   const isPlus = !!(rawData.hasPlus || rawData.hasSuper || rawData.plusStatus === 'active' || rawAny.has_plus || rawAny.is_plus || hasInventoryPremium || hasItemPremium);
 
-  // 计算总学习时间：仅使用 xp_summaries 中的真实 totalSessionTime
-  let totalMinutes = 0;
-  let hasRealTimeData = false;
-  if (rawAny._xpSummaries?.length) {
+  // 计算总学习时间：优先使用课程中的真实 timeSpent
+  const coursesTimeSum = courses.reduce((sum, c) => sum + (c.timeSpent || 0), 0);
+  let totalMinutes = coursesTimeSum;
+  let hasRealTimeData = totalMinutes > 0;
+
+  if (!hasRealTimeData && rawAny._xpSummaries?.length) {
     const totalSeconds = rawAny._xpSummaries.reduce((acc: number, s: any) =>
       acc + (s.totalSessionTime ?? s.total_session_time ?? 0), 0);
     totalMinutes = Math.floor(totalSeconds / 60);
     hasRealTimeData = totalSeconds > 0;
   }
 
-  // 加上新科目中的 timeSpent (如果 xp_summaries 没统计到的话)
-  if (courses.some(c => (c.timeSpent || 0) > 0)) {
-    const amebaTimeSeconds = courses.reduce((acc, c) => acc + (c.timeSpent || 0), 0);
-    const amebaMinutes = Math.floor(amebaTimeSeconds / 60);
-    // 如果 Ameba 时间比 xp_summaries 显著多，可能代表 xp_summaries 漏统计了新科目
-    if (amebaMinutes > totalMinutes) {
-      totalMinutes = amebaMinutes;
-      hasRealTimeData = true;
-    }
+  if (!hasRealTimeData) {
+    let dailyTimeSum = 0;
+    timeByDate.forEach(t => { dailyTimeSum += t; });
+    totalMinutes = dailyTimeSum;
+    hasRealTimeData = totalMinutes > 0;
+  }
+
+  // 兜底方案：如果总时间为 0 且有经验值，则根据 XP 估算 (每 3 XP 估算为 1 分钟)
+  if (totalMinutes === 0 && totalXp > 0) {
+    totalMinutes = Math.ceil(totalXp / 3);
+    hasRealTimeData = true;
   }
 
   const estimatedLearningTime = hasRealTimeData
@@ -559,7 +562,7 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
 
   const streakExtendedTime = resolveStreakExtendedTime(streakExtendedToday, rawAny, rawData, localTodayStart, timeZone);
 
-  // 优先从 xpSummaries 获取今日数据（包含官方统计的 numSessions）
+  // 优先从 xpSummaries 获取今日数据（包含官方统计 of numSessions）
   if (rawAny._xpSummaries?.length) {
     const todaySummary = rawAny._xpSummaries.find((s: any) =>
       parseSummaryDateKey(s.date, timeZone) === localTodayDateKey
@@ -602,8 +605,6 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
     if (lessonsToday === 0) lessonsToday = todayGains.length;
   }
 
-
-
   return {
     timezone: timeZone,
     streak, totalXp,
@@ -620,12 +621,8 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
     numSessionsCompleted: rawAny.numSessionsCompleted,
     streakFreezeCount: rawAny.streakFreezeCount,
   };
-};
+}
 
-/**
- * 客户端使用此函数从本服务 API 获取数据
- * 替代了之前直接访问 Duolingo 的逻辑，解决了 CORS 和 安全问题
- */
 export async function fetchDuolingoData(username?: string, _jwt?: string): Promise<UserData> {
   const url = username ? `/api/data?username=${encodeURIComponent(username)}` : '/api/data';
   const timezone = typeof Intl !== 'undefined'

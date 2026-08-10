@@ -76,11 +76,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                             {getUpdateStatusText()}
                         </span>
                     </div>
-
-                    {/* 移动端图标显示（仅在窄屏下显示） */}
-                    <div className="lg:hidden flex items-center justify-center w-8 h-8">
-                        <AppIcon name="parrot" mode={iconMode} className="w-6 h-6" />
-                    </div>
                     
                     {/* 操作按钮组 */}
                     <div className={`flex items-center rounded-2xl border-2 border-b-4 transition-all duration-300 lg:border-0 lg:border-b-0 lg:rounded-none lg:bg-transparent lg:gap-2 ${

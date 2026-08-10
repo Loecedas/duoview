@@ -5,6 +5,8 @@ import { t } from '../utils/i18n';
 
 export default function LandingHero() {
     const [username, setUsername] = useState('');
+    const [isCompareMode, setIsCompareMode] = useState(false);
+    const [username2, setUsername2] = useState('');
     const [loading, setLoading] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
@@ -75,10 +77,15 @@ export default function LandingHero() {
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        const trimmed = username.trim();
-        if (!trimmed) return;
+        const trimmed1 = username.trim();
+        if (!trimmed1) return;
         setLoading(true);
-        window.location.href = `/dashboard?user=${encodeURIComponent(trimmed)}`;
+        if (isCompareMode) {
+            const trimmed2 = username2.trim();
+            window.location.href = `/dashboard?user=${encodeURIComponent(trimmed1)},${encodeURIComponent(trimmed2)}`;
+        } else {
+            window.location.href = `/dashboard?user=${encodeURIComponent(trimmed1)}`;
+        }
     }
 
     const examples = ['duolingo', 'KartikTalwar'];
@@ -151,26 +158,82 @@ export default function LandingHero() {
                     </p>
 
                     <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
-                        <div>
-                            <label htmlFor="username" className={`block text-xs font-black uppercase tracking-widest mb-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                                {t('hero.label')}
-                            </label>
-                            <input
-                                id="username"
-                                type="text"
-                                autoFocus
-                                autoComplete="off"
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
-                                placeholder={t('hero.placeholder')}
-                                className={`w-full px-4 py-3.5 rounded-2xl border-2 border-b-4 focus:border-[#1cb0f6] outline-none font-bold text-base transition-colors placeholder:font-normal ${isDark ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500' : 'bg-white border-gray-200 text-gray-800 placeholder:text-gray-400'}`}
-                            />
+                        {/* Mode Toggle Switch */}
+                        <div className="flex items-center justify-between mb-2">
+                            <span className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                查询模式
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setIsCompareMode(!isCompareMode)}
+                                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all border-2 border-b-4 ${
+                                    isCompareMode
+                                    ? 'bg-[#f9f0ff] border-[#ce82ff] text-[#ce82ff]'
+                                    : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300'
+                                }`}
+                            >
+                                {isCompareMode ? '双人对比 开启' : '单人查询 开启'}
+                            </button>
                         </div>
+
+                        {!isCompareMode ? (
+                            <div>
+                                <label htmlFor="username" className={`block text-xs font-black uppercase tracking-widest mb-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                    {t('hero.label')}
+                                </label>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    autoFocus
+                                    autoComplete="off"
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
+                                    placeholder={t('hero.placeholder')}
+                                    className={`w-full px-4 py-3.5 rounded-2xl border-2 border-b-4 focus:border-[#1cb0f6] outline-none font-bold text-base transition-colors placeholder:font-normal ${isDark ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500' : 'bg-white border-gray-200 text-gray-800 placeholder:text-gray-400'}`}
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-3 animate-fade-in-up">
+                                <div>
+                                    <label htmlFor="username" className={`block text-xs font-black uppercase tracking-widest mb-1.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                        第一个用户
+                                    </label>
+                                    <input
+                                        id="username"
+                                        type="text"
+                                        autoFocus
+                                        autoComplete="off"
+                                        value={username}
+                                        onChange={e => setUsername(e.target.value)}
+                                        placeholder="输入第一个用户名"
+                                        className={`w-full px-4 py-3.5 rounded-2xl border-2 border-b-4 focus:border-[#ce82ff] outline-none font-bold text-base transition-colors placeholder:font-normal ${isDark ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500' : 'bg-white border-gray-200 text-gray-800 placeholder:text-gray-400'}`}
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="username2" className={`block text-xs font-black uppercase tracking-widest mb-1.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                        第二个用户
+                                    </label>
+                                    <input
+                                        id="username2"
+                                        type="text"
+                                        autoComplete="off"
+                                        value={username2}
+                                        onChange={e => setUsername2(e.target.value)}
+                                        placeholder="输入第二个用户名"
+                                        className={`w-full px-4 py-3.5 rounded-2xl border-2 border-b-4 focus:border-[#ce82ff] outline-none font-bold text-base transition-colors placeholder:font-normal ${isDark ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500' : 'bg-white border-gray-200 text-gray-800 placeholder:text-gray-400'}`}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             type="submit"
-                            disabled={!username.trim() || loading}
-                            className="w-full py-3.5 rounded-2xl border-2 border-b-4 border-[#1cb0f6] bg-[#1cb0f6] hover:bg-[#1899d6] text-white font-black text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:border-b-2 active:translate-y-0.5"
+                            disabled={!username.trim() || (isCompareMode && !username2.trim()) || loading}
+                            className={`w-full py-3.5 rounded-2xl border-2 border-b-4 text-white font-black text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:border-b-2 active:translate-y-0.5 ${
+                                isCompareMode 
+                                ? 'border-[#ce82ff] bg-[#ce82ff] hover:bg-[#b066e0]' 
+                                : 'border-[#1cb0f6] bg-[#1cb0f6] hover:bg-[#1899d6]'
+                            }`}
                         >
                             {loading ? (
                                 <>
@@ -180,7 +243,7 @@ export default function LandingHero() {
                             ) : (
                                 <>
                                     <AppIcon name="search" mode={iconMode} className="text-white" />
-                                    {t('hero.submit')}
+                                    {isCompareMode ? '开始对比' : t('hero.submit')}
                                 </>
                             )}
                         </button>

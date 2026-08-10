@@ -27,7 +27,7 @@ export function CourseList({ courses, seq = 5 }: CourseListProps): React.ReactEl
 
       {courses.length > 0 ? (
         <div className="p-3 sm:p-4">
-          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3 overflow-x-auto md:overflow-x-visible pb-2 sm:pb-0">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:flex-row gap-2 sm:gap-3 pb-2 sm:pb-0">
             {sortedCourses.map((course, idx) => {
               const percent = totalCourseXp > 0 ? ((course.xp / totalCourseXp) * 100).toFixed(1) : '0';
               const relativeWidth = maxCourseXp > 0 ? (course.xp / maxCourseXp) * 100 : 0;
@@ -36,7 +36,7 @@ export function CourseList({ courses, seq = 5 }: CourseListProps): React.ReactEl
               return (
                 <div
                   key={course.id}
-                  className="bg-gray-50 rounded-xl p-2.5 sm:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all flex-1 min-w-0 sm:min-w-[180px] md:min-w-0"
+                  className="bg-gray-50 rounded-xl p-2.5 sm:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all flex-1 min-w-0"
                 >
                   <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />

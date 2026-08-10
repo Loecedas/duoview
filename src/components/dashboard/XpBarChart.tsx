@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, ReferenceLine,
@@ -7,7 +7,16 @@ import type { UserData } from '../../types';
 import { AppIcon } from '../AppIcon';
 import type { IconMode } from '../useIconMode';
 
-interface Props { userData: UserData; seq?: number; theme?: 'light' | 'dark'; isPrinting?: boolean; iconMode: IconMode; }
+interface Props {
+    userData: UserData;
+    compareUserData?: UserData | null;
+    seq?: number;
+    theme?: 'light' | 'dark';
+    isPrinting?: boolean;
+    iconMode: IconMode;
+    user1Label?: string;
+    user2Label?: string;
+}
 
 function formatMinutes(total: number): string {
     const h = Math.floor(total / 60);
@@ -29,6 +38,11 @@ function SingleAreaChart({
     refValue,
     isDark,
     isPrinting,
+    dataKey2,
+    color2,
+    label1,
+    label2,
+    footerValue2,
 }: {
     data: Record<string, unknown>[];
     dataKey: string;
@@ -41,6 +55,11 @@ function SingleAreaChart({
     refValue?: number;
     isDark: boolean;
     isPrinting?: boolean;
+    dataKey2?: string;
+    color2?: string;
+    label1?: string;
+    label2?: string;
+    footerValue2?: string;
 }) {
     return (
         <div className="chart-shell bg-white rounded-2xl p-4 shadow-sm border-2 border-b-4 border-gray-200 flex flex-col gap-2">
@@ -52,6 +71,12 @@ function SingleAreaChart({
                             <stop offset="5%" stopColor={color} stopOpacity={0.25} />
                             <stop offset="95%" stopColor={color} stopOpacity={0.02} />
                         </linearGradient>
+                        {dataKey2 && color2 && (
+                            <linearGradient id={`${gradientId}2`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={color2} stopOpacity={0.25} />
+                                <stop offset="95%" stopColor={color2} stopOpacity={0.02} />
+                            </linearGradient>
+                        )}
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                     <XAxis
@@ -85,11 +110,15 @@ function SingleAreaChart({
                         labelStyle={{ color: isDark ? '#cbd5e1' : '#374151' }}
                         itemStyle={{ color: isDark ? '#e2e8f0' : '#111827' }}
                         cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 4' }}
-                        formatter={(v: number | string | undefined) => [`${v ?? 0} ${unit}`, '']}
+                        formatter={(v: number | string | undefined, name: any) => {
+                            const displayName = name === dataKey ? (label1 || '用户1') : (label2 || '用户2');
+                            return [`${v ?? 0} ${unit}`, displayName];
+                        }}
                     />
                     <Area
                         type="monotone"
                         dataKey={dataKey}
+                        name={dataKey}
                         stroke={color}
                         strokeWidth={2.5}
                         fill={`url(#${gradientId})`}
@@ -98,12 +127,37 @@ function SingleAreaChart({
                         isAnimationActive={!isPrinting}
                         animationDuration={isPrinting ? 0 : 1500}
                     />
+                    {dataKey2 && color2 && (
+                        <Area
+                            type="monotone"
+                            dataKey={dataKey2}
+                            name={dataKey2}
+                            stroke={color2}
+                            strokeWidth={2.5}
+                            fill={`url(#${gradientId}2)`}
+                            dot={false}
+                            activeDot={{ r: 4, fill: color2, strokeWidth: 0 }}
+                            isAnimationActive={!isPrinting}
+                            animationDuration={isPrinting ? 0 : 1500}
+                        />
+                    )}
                 </AreaChart>
             </ResponsiveContainer>
-            <p className="text-center text-xs text-gray-400">
-                {footerLabel}{' '}
-                <span className="font-bold" style={{ color }}>{footerValue}</span>
-            </p>
+            {dataKey2 ? (
+                <div className="flex justify-around pt-1 text-xs text-gray-400">
+                    <div>
+                        {label1}: <span className="font-bold" style={{ color }}>{footerValue}</span>
+                    </div>
+                    <div>
+                        {label2}: <span className="font-bold" style={{ color: color2 }}>{footerValue2}</span>
+                    </div>
+                </div>
+            ) : (
+                <p className="text-center text-xs text-gray-400">
+                    {footerLabel}{' '}
+                    <span className="font-bold" style={{ color }}>{footerValue}</span>
+                </p>
+            )}
         </div>
     );
 }
@@ -125,48 +179,103 @@ function ChartTitle({
     );
 }
 
-export function XpBarChart({ userData, theme = 'light', isPrinting = false, iconMode }: Props) {
-    const xpData = (userData.dailyXpHistory?.slice(-7) ?? []) as Record<string, unknown>[];
-    const timeData = (userData.dailyTimeHistory?.slice(-7) ?? []) as Record<string, unknown>[];
+export function XpBarChart({
+    userData,
+    compareUserData,
+    theme = 'light',
+    isPrinting = false,
+    iconMode,
+    user1Label,
+    user2Label,
+}: Props) {
     const isDark = theme === 'dark';
 
-    const weeklyXp = xpData
-        .filter((d) => !d.isFuture)
-        .reduce((s, d) => s + ((d.xp as number) || 0), 0);
+    const xpData = useMemo(() => {
+        const u1History = userData.dailyXpHistory?.slice(-7) ?? [];
+        if (!compareUserData) {
+            return u1History.map(d => ({ ...d, xp1: d.xp }));
+        }
+        const u2History = compareUserData.dailyXpHistory?.slice(-7) ?? [];
+        return u1History.map((d, index) => {
+            const u2Day = u2History[index];
+            return {
+                date: d.date,
+                xp1: (d.xp as number) || 0,
+                xp2: (u2Day?.xp as number) || 0,
+                isFuture: d.isFuture || u2Day?.isFuture
+            };
+        });
+    }, [userData, compareUserData]);
 
-    const weeklyMinutes = timeData
-        .filter((d) => !d.isFuture)
-        .reduce((s, d) => s + ((d.time as number) || 0), 0);
+    const timeData = useMemo(() => {
+        const u1History = userData.dailyTimeHistory?.slice(-7) ?? [];
+        if (!compareUserData) {
+            return u1History.map(d => ({ ...d, time1: d.time }));
+        }
+        const u2History = compareUserData.dailyTimeHistory?.slice(-7) ?? [];
+        return u1History.map((d, index) => {
+            const u2Day = u2History[index];
+            return {
+                date: d.date,
+                time1: (d.time as number) || 0,
+                time2: (u2Day?.time as number) || 0,
+                isFuture: d.isFuture || u2Day?.isFuture
+            };
+        });
+    }, [userData, compareUserData]);
 
-    const nonZeroDays = xpData.filter((d) => !d.isFuture && ((d.xp as number) || 0) > 0).length;
-    const avgXp = nonZeroDays > 0 ? Math.round(weeklyXp / nonZeroDays) : 0;
+    const weeklyXp1 = xpData
+        .filter((d) => !d.isFuture)
+        .reduce((s, d) => s + ((d.xp1 as number) || 0), 0);
+
+    const weeklyXp2 = compareUserData ? xpData
+        .filter((d) => !d.isFuture)
+        .reduce((s, d) => s + ((d.xp2 as number) || 0), 0) : 0;
+
+    const weeklyMinutes1 = timeData
+        .filter((d) => !d.isFuture)
+        .reduce((s, d) => s + ((d.time1 as number) || 0), 0);
+
+    const weeklyMinutes2 = compareUserData ? timeData
+        .filter((d) => !d.isFuture)
+        .reduce((s, d) => s + ((d.time2 as number) || 0), 0) : 0;
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SingleAreaChart
                 data={xpData}
-                dataKey="xp"
+                dataKey="xp1"
                 title={<ChartTitle icon="bolt" iconMode={iconMode}>最近 7 天经验</ChartTitle>}
                 color="#58cc02"
                 gradientId="xpGradient"
                 footerLabel="本周共获得"
-                footerValue={`${weeklyXp.toLocaleString()} XP`}
+                footerValue={`${weeklyXp1.toLocaleString()} XP`}
                 unit="XP"
                 isDark={isDark}
                 isPrinting={isPrinting}
+                dataKey2={compareUserData ? 'xp2' : undefined}
+                color2="#ce82ff"
+                label1={user1Label || '用户1'}
+                label2={user2Label || '用户2'}
+                footerValue2={`${weeklyXp2.toLocaleString()} XP`}
             />
             {timeData.length > 0 ? (
                 <SingleAreaChart
                     data={timeData}
-                    dataKey="time"
+                    dataKey="time1"
                     title={<ChartTitle icon="clock" iconMode={iconMode}>最近 7 天学习时间</ChartTitle>}
                     color="#1cb0f6"
                     gradientId="timeGradient"
                     footerLabel="本周学习"
-                    footerValue={formatMinutes(weeklyMinutes)}
+                    footerValue={formatMinutes(weeklyMinutes1)}
                     unit="分钟"
                     isDark={isDark}
                     isPrinting={isPrinting}
+                    dataKey2={compareUserData ? 'time2' : undefined}
+                    color2="#ff9600"
+                    label1={user1Label || '用户1'}
+                    label2={user2Label || '用户2'}
+                    footerValue2={formatMinutes(weeklyMinutes2)}
                 />
             ) : (
                 <div className="bg-white rounded-2xl p-4 shadow-sm border-2 border-b-4 border-gray-200 flex items-center justify-center">

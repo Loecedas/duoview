@@ -72,8 +72,8 @@ export const GET: APIRoute = async ({ request }) => {
 
         // 1. 获取基础信息和 userId（这是最快的接口）
         const v2Result = await fetchWithTimeout(
-            `${DUOLINGO_BASE_URL}/2017-06-30/users?username=${encodeURIComponent(username)}`,
-            headers, 8000
+            `${DUOLINGO_BASE_URL}/2023-05-23/users?username=${encodeURIComponent(username)}`,
+            headers, 10000
         );
 
         if (v2Result.status === 401 || v2Result.status === 403) {
@@ -98,15 +98,15 @@ export const GET: APIRoute = async ({ request }) => {
             
             const [amebaResult, xpResult, lbResult] = await Promise.all([
                 fetchWithTimeout(
-                    `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}?fields=courses,currentCourse,fromLanguage,learningLanguage,trackingProperties`,
+                    `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}?fields=courses,currentCourse,fromLanguage,learningLanguage,trackingProperties,totalXp`,
                     authHeaders, 8000
                 ),
                 jwt ? fetchWithTimeout(
-                    `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/xp_summaries?startDate=1970-01-01`,
+                    `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}/xp_summaries?startDate=1970-01-01`,
                     authHeaders, 8000
                 ) : Promise.resolve({ data: null, status: 200 }),
                 jwt ? fetchWithTimeout(
-                    `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}/leaderboards?active=true`,
+                    `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}/leaderboards?active=true`,
                     authHeaders, 8000
                 ) : Promise.resolve({ data: null, status: 200 })
             ]);
@@ -155,8 +155,6 @@ export const GET: APIRoute = async ({ request }) => {
         }
 
         const transformed = transformDuolingoData(userData, userTimezone);
-
-
 
         if (cache.size >= MAX_CACHE_SIZE) {
             const oldestKey = cache.keys().next().value;
