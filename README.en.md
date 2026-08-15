@@ -1,28 +1,14 @@
-# DuoView
+# 🦜 DuoView
 
 English | [简体中文](./README.md)
 
-<p align="center">
-  <img src="assets/logo.svg" alt="DuoView Logo" width="80" height="80" />
-</p>
-
-<p align="center">
-  <strong>A modern Duolingo learning data dashboard and dual-user comparison tool built with Astro + React + Recharts.</strong>
-</p>
+> A modern Duolingo learning data dashboard and dual-user comparison tool built with Astro + React + Recharts.
 
 ---
 
 ## 📸 Preview
 
-### Single User Query
-<p align="center">
-  <img src="assets/single-user.png" alt="Single User Preview" width="80%" />
-</p>
-
-### Dual-User Comparison
-<p align="center">
-  <img src="assets/compare-users.png" alt="Compare Users Preview" width="80%" />
-</p>
+![Dual-User Comparison Preview](./assets/compare-users.png)
 
 ---
 

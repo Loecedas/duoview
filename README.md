@@ -1,28 +1,14 @@
-# DuoView
+# 🦜 DuoView
 
 [English](./README.en.md) | 简体中文
 
-<p align="center">
-  <img src="assets/logo.svg" alt="DuoView Logo" width="80" height="80" />
-</p>
-
-<p align="center">
-  <strong>一个基于 Astro + React + Recharts 构建的现代化多邻国（Duolingo）学习数据可视化与双人对比仪表盘。</strong>
-</p>
+> 一个基于 Astro + React + Recharts 构建的现代化多邻国（Duolingo）学习数据可视化与双人对比仪表盘。
 
 ---
 
 ## 📸 界面预览
 
-### 个人查询展示
-<p align="center">
-  <img src="assets/single-user.png" alt="个人查询展示" width="80%" />
-</p>
-
-### 对比查询展示
-<p align="center">
-  <img src="assets/compare-users.png" alt="对比查询展示" width="80%" />
-</p>
+![双人对比查询展示](./assets/compare-users.png)
 
 ---
 
