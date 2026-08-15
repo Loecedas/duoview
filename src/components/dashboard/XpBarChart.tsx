@@ -26,6 +26,27 @@ function formatMinutes(total: number): string {
     return `${h}小时${m}分钟`;
 }
 
+const getHorizontalCoordinates = ({ yAxis }: any) => {
+    if (!yAxis) return [];
+    const ticks = yAxis.ticks || yAxis.niceTicks;
+    if (Array.isArray(ticks)) {
+        return ticks.map((entry: any) => {
+            if (entry && typeof entry.coordinate === 'number') {
+                return entry.coordinate;
+            }
+            const val = typeof entry === 'object' && entry !== null && 'value' in entry ? entry.value : entry;
+            if (typeof yAxis.scale?.map === 'function') {
+                return yAxis.scale.map(val);
+            }
+            if (typeof yAxis.scale === 'function') {
+                return yAxis.scale(val);
+            }
+            return null;
+        }).filter((c: any) => typeof c === 'number' && !isNaN(c));
+    }
+    return [];
+};
+
 function SingleAreaChart({
     data,
     dataKey,
@@ -78,15 +99,20 @@ function SingleAreaChart({
                             </linearGradient>
                         )}
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={isDark ? '#334155' : '#f0f0f0'}
+                        vertical={false}
+                        horizontalCoordinatesGenerator={getHorizontalCoordinates}
+                    />
                     <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 10, fill: '#9ca3af' }}
+                        tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#9ca3af' }}
                         tickLine={false}
                         axisLine={false}
                     />
                     <YAxis
-                        tick={{ fontSize: 10, fill: '#9ca3af' }}
+                        tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#9ca3af' }}
                         tickLine={false}
                         axisLine={false}
                     />
@@ -99,6 +125,7 @@ function SingleAreaChart({
                         />
                     )}
                     <Tooltip
+                        itemSorter={(item: any) => -(Number(item.value) || 0)}
                         contentStyle={{
                             borderRadius: 12,
                             border: isDark ? '1px solid #334155' : 'none',
@@ -255,8 +282,8 @@ export function XpBarChart({
                 isPrinting={isPrinting}
                 dataKey2={compareUserData ? 'xp2' : undefined}
                 color2="#ce82ff"
-                label1={user1Label || '用户1'}
-                label2={user2Label || '用户2'}
+                label1={user1Label || userData.username || '用户1'}
+                label2={user2Label || compareUserData?.username || '用户2'}
                 footerValue2={`${weeklyXp2.toLocaleString()} XP`}
             />
             {timeData.length > 0 ? (
@@ -273,8 +300,8 @@ export function XpBarChart({
                     isPrinting={isPrinting}
                     dataKey2={compareUserData ? 'time2' : undefined}
                     color2="#ff9600"
-                    label1={user1Label || '用户1'}
-                    label2={user2Label || '用户2'}
+                    label1={user1Label || userData.username || '用户1'}
+                    label2={user2Label || compareUserData?.username || '用户2'}
                     footerValue2={formatMinutes(weeklyMinutes2)}
                 />
             ) : (

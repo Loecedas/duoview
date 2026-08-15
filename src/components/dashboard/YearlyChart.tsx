@@ -24,6 +24,27 @@ interface YearData {
   xp2?: number;
 }
 
+const getHorizontalCoordinates = ({ yAxis }: any) => {
+  if (!yAxis) return [];
+  const ticks = yAxis.ticks || yAxis.niceTicks;
+  if (Array.isArray(ticks)) {
+    return ticks.map((entry: any) => {
+      if (entry && typeof entry.coordinate === 'number') {
+        return entry.coordinate;
+      }
+      const val = typeof entry === 'object' && entry !== null && 'value' in entry ? entry.value : entry;
+      if (typeof yAxis.scale?.map === 'function') {
+        return yAxis.scale.map(val);
+      }
+      if (typeof yAxis.scale === 'function') {
+        return yAxis.scale(val);
+      }
+      return null;
+    }).filter((c: any) => typeof c === 'number' && !isNaN(c));
+  }
+  return [];
+};
+
 function YearlyChart({
   data,
   compareData,
@@ -79,10 +100,10 @@ function YearlyChart({
   const themeColor2 = '#58cc02';
 
   return (
-    <div className="chart-shell flex h-full min-h-[220px] w-full flex-col">
-      <div className="flex-1">
+    <div className="chart-shell flex w-full flex-col gap-2">
+      <div className="w-full">
         <ResponsiveContainer width="100%" height={160}>
-          <AreaChart data={yearlyData} margin={{ top: 14, right: 10, bottom: 5, left: -20 }}>
+          <AreaChart data={yearlyData} margin={{ top: 14, right: 10, bottom: 5, left: -8 }}>
             <defs>
               <linearGradient id="yearXpGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={themeColor1} stopOpacity={0.25} />
@@ -99,6 +120,7 @@ function YearlyChart({
               strokeDasharray="3 3"
               vertical={false}
               stroke={isDark ? '#334155' : '#f0f0f0'}
+              horizontalCoordinatesGenerator={getHorizontalCoordinates}
             />
             <XAxis
               dataKey="year"
@@ -111,20 +133,23 @@ function YearlyChart({
               axisLine={false}
               tickLine={false}
               tick={{ fill: isDark ? '#94a3b8' : '#9ca3af', fontSize: 10 }}
-              width={40}
+              width={45}
               domain={[0, 'auto']}
               tickFormatter={(value) => (value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value)}
             />
             <Tooltip
+              itemSorter={(item: any) => -(Number(item.value) || 0)}
+              cursor={{ stroke: themeColor1, strokeWidth: 1, strokeDasharray: '4 4' }}
               formatter={(value, name) => {
                 const displayName = name === 'xp1' ? (user1Label || '用户1') : (user2Label || '用户2');
                 return [`${Number(value ?? 0).toLocaleString()} XP`, displayName];
               }}
               contentStyle={{
-                borderRadius: '12px',
+                borderRadius: 12,
                 border: isDark ? '1px solid #334155' : 'none',
                 boxShadow: isDark ? '0 8px 20px rgba(0,0,0,0.35)' : '0 4px 12px rgba(0,0,0,0.1)',
                 backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                fontSize: 12,
                 color: isDark ? '#e2e8f0' : '#111827',
               }}
               labelStyle={{ color: isDark ? '#cbd5e1' : '#374151' }}

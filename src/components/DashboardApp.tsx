@@ -763,7 +763,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
 
                             {/* Charts */}
                             <div className="mb-4">
-                                <XpBarChart userData={userData} seq={5} theme={resolvedTheme} isPrinting={sharing} iconMode={iconMode} />
+                                <XpBarChart userData={userData} seq={5} theme={resolvedTheme} isPrinting={sharing} iconMode={iconMode} user1Label={username} />
                             </div>
 
                             {/* Monthly Chart */}
@@ -807,6 +807,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                                         metric={monthlyMetric}
                                         isDark={isDark}
                                         isPrinting={sharing}
+                                        user1Label={username}
                                     />
                                 </div>
                             </div>
@@ -818,14 +819,14 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                                         <AppIcon name="bolt" mode={iconMode} className="mr-1.5 text-[1.05em]" />
                                         年度经验对比
                                     </h2>
-                                    <YearlyChart data={userData.yearlyXpHistory || []} isDark={isDark} isPrinting={sharing} />
+                                    <YearlyChart data={userData.yearlyXpHistory || []} isDark={isDark} isPrinting={sharing} user1Label={username} />
                                 </div>
                                 <div className="bg-white rounded-2xl p-4 shadow-sm border-2 border-b-4 border-gray-200 flex flex-col gap-2">
                                     <h2 className="flex h-6 items-center text-base font-bold leading-none text-gray-800">
                                         <AppIcon name="clock" mode={iconMode} className="mr-1.5 text-[1.05em]" />
                                         年度学习时间
                                     </h2>
-                                    <YearlyTimeChart data={userData.yearlyXpHistory || []} isDark={isDark} isPrinting={sharing} />
+                                    <YearlyTimeChart data={userData.yearlyXpHistory || []} isDark={isDark} isPrinting={sharing} user1Label={username} />
                                 </div>
                             </div>
 
@@ -845,6 +846,11 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                             </div>
                         </div>
                     )}
+
+                    {/* Footer */}
+                    <footer className={`mt-10 pb-6 text-center text-xs ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+                        © 2026 · DuoView 非官方工具
+                    </footer>
                 </div>
             </div>
         </div>

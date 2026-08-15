@@ -1,124 +1,133 @@
 # DuoView
 
-一个用于查看 Duolingo 公开学习数据的仪表盘应用。
+[English](./README.en.md) | 简体中文
 
-输入用户名后，DuoView 会从 Duolingo 的公开接口拉取数据，并整理成更易读的图表和统计面板。支持查看最近 7 天学习趋势、今日概览、课程分布、年度热力图，并可导出当前仪表盘为分享图片。
+<p align="center">
+  <img src="assets/logo.svg" alt="DuoView Logo" width="80" height="80" />
+</p>
 
-## 功能
+<p align="center">
+  <strong>一个基于 Astro + React + Recharts 构建的现代化多邻国（Duolingo）学习数据可视化与双人对比仪表盘。</strong>
+</p>
 
-- 查询任意公开 Duolingo 用户
-- 展示连续学习天数、总 XP、学习课程数、账号年龄
-- 展示最近 7 天 XP 和学习时长趋势
-- 展示今日 XP、今日课程数、今日学习分钟数
-- 展示课程 XP 分布
-- 展示年度学习热力图，并根据屏幕宽度自动切换季度 / 半年 / 全年视图
-- 导出仪表盘截图为 PNG
-- 支持浅色 / 深色 / 跟随系统主题
-- 服务端缓存用户数据，减少重复请求
+---
 
-## 技术栈
+## 📸 界面预览
 
-- Astro 5
-- React 19
-- Tailwind CSS 4
-- Recharts
+### 个人查询展示
+<p align="center">
+  <img src="assets/single-user.png" alt="个人查询展示" width="80%" />
+</p>
 
-## 环境要求
+### 对比查询展示
+<p align="center">
+  <img src="assets/compare-users.png" alt="对比查询展示" width="80%" />
+</p>
 
-- Node.js `22.x`
-- npm
+---
 
-## 本地运行
+## ✨ 功能特性
+
+- 📊 **核心指标看板**：直观展示连胜天数、总累计经验（XP）、学习课程总数以及注册账号天数。
+- 👥 **双人同屏对比**：支持输入两个用户名进行全方位学习数据 PK，包含连胜天数、总 XP、累计时长、注册天数的进度对比条与动态排序图表。
+- 📈 **多维度趋势分析**：
+  - **7 天经验与时长**：最近 7 天的每日 XP 与学习时间波动面积图。
+  - **月度历史分析**：支持“近 12 个月”滚动视图与历史年份切换，XP/时间一键切换。
+  - **年度数据沉淀**：年度经验与学习时长的历史跨度分析。
+- 📅 **年度学习热力图**：全天候打卡热力图，支持多历年快速切换，自适应不同屏幕宽度。
+- 🌐 **语言与科目分布**：以清晰的占比进度条和课程明细，呈现各语种及兴趣科目的学习分布。
+- ⏱️ **今日学习概览**：实时统计今日学完课程数、今日获得经验与今日学习时长。
+- 🎨 **丰富个性化设置**：
+  - 支持多邻国 Emoji 与扁平矢量图标风格自由切换。
+  - 支持浅色模式 / 深色模式 / 跟随系统主题。
+- 📸 **一键长图分享**：内置仪表盘截图导出功能，便于一键保存高清图片并分享打卡。
+
+---
+
+## 📁 项目结构
+
+```text
+duoview/
+├── assets/                     # 预览截图与静态资源
+├── public/                     # 静态公共资源（图标、manifest 等）
+├── src/
+│   ├── components/             # React 组件
+│   │   ├── dashboard/          # 仪表盘核心图表与统计卡片组件
+│   │   ├── DashboardApp.tsx    # 仪表盘主应用与路由逻辑
+│   │   ├── LandingHero.tsx     # 首页引导与查询入口
+│   │   ├── Navbar.tsx          # 顶部导航栏
+│   │   └── AppIcon.tsx         # 多模式图标组件
+│   ├── layouts/
+│   │   └── Layout.astro        # 页面通用模板
+│   ├── pages/
+│   │   ├── api/
+│   │   │   └── data.ts         # 多邻国数据服务端聚合与缓存接口
+│   │   ├── dashboard.astro     # 仪表盘页面
+│   │   └── index.astro         # 首页
+│   ├── services/
+│   │   └── duolingoService.ts  # 多邻国 API 数据解析与清洗服务
+│   ├── styles/
+│   │   ├── duolingoColors.ts   # 官方主题配色
+│   │   └── global.css          # 全局样式
+│   ├── types.ts                # 全局 TypeScript 类型定义
+│   └── utils/                  # 国际化与通用辅助函数
+├── astro.config.mjs            # Astro 配置文件
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## 🛠️ 环境要求
+
+- **Node.js**：`20.x` 或 `22.x`
+- **包管理器**：`npm` / `yarn` / `pnpm`
+
+---
+
+## 🚀 快速开始
+
+### 1. 克隆仓库与安装依赖
 
 ```bash
+git clone https://github.com/Loecedas/duoview.git
+cd duoview
 npm install
+```
+
+### 2. 配置环境变量
+
+复制 `.env.example` 文件并重命名为 `.env`：
+
+```bash
 cp .env.example .env
 ```
 
-在 `.env` 中配置：
+在 `.env` 中填写你的配置：
 
 ```env
-DUOLINGO_JWT=your_duolingo_jwt
+# 必填：Duolingo JWT Token（用于获取公开数据）
+# 获取方式：在浏览器登录 duolingo.com，按 F12 打开开发者工具 → Network → 找到任一 /users 请求 → 复制请求头中的 Authorization Bearer Token
+DUOLINGO_JWT=your_duolingo_jwt_token
 ```
 
-然后启动开发环境：
+### 3. 启动开发服务器
 
 ```bash
 npm run dev
 ```
 
-默认地址：
+启动成功后，在浏览器打开 `http://localhost:4321` 即可体验。
 
-```text
-http://localhost:4321
-```
-
-## 如何使用
-
-1. 打开首页。
-2. 输入 Duolingo 用户名。
-3. 跳转到 `/dashboard?user=<username>` 查看仪表盘。
-4. 需要分享时，点击页面里的导出按钮生成 PNG。
-
-也可以直接访问：
-
-```text
-/dashboard?user=duolingo
-```
-
-## JWT 说明
-
-`DUOLINGO_JWT` 用于补充需要鉴权的接口数据。
-
-未配置时：
-
-- 仍可查询公开用户的基础信息
-- 仍可展示大部分公开统计
-- 部分依赖鉴权的增强数据可能缺失
-
-已配置时：
-
-- 可获取更完整的 XP 汇总数据
-- 可补充排行榜相关信息
-- 学习时长、今日数据、热力图会更完整
-
-获取方式：
-
-1. 在浏览器登录 `duolingo.com`
-2. 打开开发者工具
-3. 在网络请求里找到带 `Authorization: Bearer <token>` 的请求
-4. 复制 token 到 `.env`
-
-## API
-
-项目提供一个服务端接口：
-
-```text
-GET /api/data?username=<username>
-```
-
-返回内容是整理后的用户学习数据，前端仪表盘直接消费这个接口。
-
-接口特性：
-
-- 用户名格式校验
-- 失败超时保护
-- 30 分钟内存缓存
-- 最多缓存 100 个用户结果
-
-## 常用命令
+### 4. 构建与预览
 
 ```bash
-npm run dev
-npm run build
-npm run preview
+npm run build    # 构建生产版本
+npm run preview  # 预览构建产物
 ```
 
-## 部署
+---
 
-仓库已包含以下平台配置文件，可直接按平台方式部署：
+## 📄 开源许可证
 
-- Vercel
-- Netlify
-
-部署前确认已配置 `DUOLINGO_JWT` 环境变量，否则只会拿到公开可见的数据。
+本项目基于 [MIT License](./LICENSE.md) 协议开源，详情请参阅 [LICENSE.md](./LICENSE.md) 或 [中文版许可证](./LICENSE.zh.md)。
