@@ -1,4 +1,4 @@
-# 🦜 DuoView
+# DuoView
 
 English | [简体中文](./README.md)
 
@@ -6,31 +6,31 @@ English | [简体中文](./README.md)
 
 ---
 
-## 📸 Preview
+## Preview
 
 ![Dual-User Comparison Preview](./assets/compare-users.png)
 
 ---
 
-## ✨ Features
+## Features
 
-- 📊 **Key Metrics Overview**: Real-time stats on streak days, total XP, enrolled courses, and account age.
-- 👥 **Dual-User Comparison**: Side-by-side comparative analysis with animated comparison bars and auto-sorting tooltips.
-- 📈 **Multi-Dimensional Trend Charts**:
+- **Key Metrics Overview**: Real-time stats on streak days, total XP, enrolled courses, and account age.
+- **Dual-User Comparison**: Side-by-side comparative analysis with animated comparison bars and auto-sorting tooltips.
+- **Multi-Dimensional Trend Charts**:
   - **7-Day XP & Time**: Area trend charts showing day-by-day XP and study time fluctuations.
   - **Monthly Analysis**: Rolling 12-month view and historical year filtering with quick XP/Time switching.
   - **Yearly Consistency**: Longitudinal XP and study duration records across years.
-- 📅 **Yearly Activity Heatmap**: Responsive calendar heatmap supporting flexible year selection.
-- 🌐 **Language & Subject Distribution**: Breakdown of study effort by language with progress bars and course details.
-- ⏱️ **Today's Overview**: Live summary of lessons completed, XP earned, and active minutes today.
-- 🎨 **Personalization**:
+- **Yearly Activity Heatmap**: Responsive calendar heatmap supporting flexible year selection.
+- **Language & Subject Distribution**: Breakdown of study effort by language with progress bars and course details.
+- **Today's Overview**: Live summary of lessons completed, XP earned, and active minutes today.
+- **Personalization**:
   - Dual icon sets (Duolingo official emojis vs. clean vector icons).
   - Seamless Light / Dark / System theme switching.
-- 📸 **One-Click Share Export**: Built-in screenshot generator to export and share high-resolution study summaries.
+- **One-Click Share Export**: Built-in screenshot generator to export and share high-resolution study summaries.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 duoview/
@@ -64,14 +64,14 @@ duoview/
 
 ---
 
-## 🛠️ Requirements
+## Requirements
 
 - **Node.js**: `20.x` or `22.x`
 - **Package Manager**: `npm` / `yarn` / `pnpm`
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone the repository and install dependencies
 
@@ -114,6 +114,6 @@ npm run preview  # Preview production build locally
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the [MIT License](./LICENSE.md) (or [Chinese Version](./LICENSE.zh.md)).
+This project is licensed under the [MIT License](./LICENSE).
