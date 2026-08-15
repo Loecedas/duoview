@@ -1,9 +1,0 @@
-style: refine dashboard UI, dark mode aesthetics, and alignment
-
-- feat: replace default favicon with an inline parrot emoji SVG
-- style(Navbar): align horizontal padding dynamically with the main dashboard container
-- style(Tags): scale header icons (Super/Streak) to perfectly match text height using text-base
-- style(Dark Mode): add overrides for border-gray-100 and bright tags to blend seamlessly with dark backgrounds
-- style(Charts): remove dashed reference line (daily goal/avg) from the XP chart
-- fix(Icons): apply independent translateY offsets to SVG paths for pixel-perfect vertical alignment without breaking Emoji mode
-- chore: minor text refinements (shortened theme label and removed icon from share overlay)
