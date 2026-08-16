@@ -33,7 +33,7 @@ function isValidUsername(username: string): boolean {
 export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const username = url.searchParams.get('username')?.trim();
-    const userTimezone = request.headers.get('x-user-timezone')?.trim() || 'Asia/Shanghai';
+    const userTimezone = url.searchParams.get('tz')?.trim() || request.headers.get('x-user-timezone')?.trim() || undefined;
 
     if (!username) {
         return jsonResponse({ error: '请提供用户名' }, 400);
@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ request }) => {
 
     const jwt = getEnv('DUOLINGO_JWT');
 
-    const cacheKey = `user:${username.toLowerCase()}:tz:${userTimezone}`;
+    const cacheKey = `user:${username.toLowerCase()}:tz:${userTimezone || 'default'}`;
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         return jsonResponse({ data: cached.data, cached: true }, 200, { cacheControl: 'public, max-age=300' });

@@ -250,16 +250,19 @@ export default function DashboardApp({ username }: DashboardAppProps) {
         else setLoading(true);
         setError(null);
         try {
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const timezone = typeof Intl !== 'undefined'
+                ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                : undefined;
             const usernames = username.split(',').map(u => u.trim()).filter(Boolean);
+            const tzQuery = timezone ? `&tz=${encodeURIComponent(timezone)}` : '';
 
             if (usernames.length === 2) {
                 const [res1, res2] = await Promise.all([
-                    fetch(`/api/data?username=${encodeURIComponent(usernames[0])}`, {
+                    fetch(`/api/data?username=${encodeURIComponent(usernames[0])}${tzQuery}`, {
                         signal: controller.signal,
                         headers: timezone ? { 'x-user-timezone': timezone } : undefined
                     }),
-                    fetch(`/api/data?username=${encodeURIComponent(usernames[1])}`, {
+                    fetch(`/api/data?username=${encodeURIComponent(usernames[1])}${tzQuery}`, {
                         signal: controller.signal,
                         headers: timezone ? { 'x-user-timezone': timezone } : undefined
                     })
@@ -274,7 +277,7 @@ export default function DashboardApp({ username }: DashboardAppProps) {
                 setUserData(json1.data);
                 setCompareUserData(json2.data);
             } else {
-                const res = await fetch(`/api/data?username=${encodeURIComponent(username)}`, {
+                const res = await fetch(`/api/data?username=${encodeURIComponent(username)}${tzQuery}`, {
                     signal: controller.signal,
                     headers: timezone ? { 'x-user-timezone': timezone } : undefined
                 });

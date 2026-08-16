@@ -6,7 +6,14 @@ const LEAGUE_TIERS = [
 ];
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
-const DEFAULT_TIMEZONE = 'Asia/Shanghai';
+function getSystemTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
 const SUBJECT_MAP: Record<string, string> = {
   "chess": "国际象棋",
   "math": "数学",
@@ -56,13 +63,26 @@ function normalizeUnixTs(ts: number): number {
   return ts < 10000000000 ? ts * 1000 : ts;
 }
 
-// 日期格式化器单例，避免重复创建
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  timeZone: DEFAULT_TIMEZONE
-});
+// 日期格式化器缓存，按时区缓存以避免重复创建
+const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function getDateFormatter(timeZone: string): Intl.DateTimeFormat {
+  let formatter = dateFormatterCache.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone
+    });
+    if (dateFormatterCache.size > 50) {
+      const firstKey = dateFormatterCache.keys().next().value;
+      if (firstKey) dateFormatterCache.delete(firstKey);
+    }
+    dateFormatterCache.set(timeZone, formatter);
+  }
+  return formatter;
+}
 
 // 日期解析缓存，减少重复的 Date 解析开销
 const dateParseCache = new Map<string, number>();
@@ -81,24 +101,27 @@ function getCachedDateTimestamp(dateStr: string): number {
   return ts;
 }
 
+function normalizeTimezone(timeZone?: string): string {
+  if (timeZone) {
+    try {
+      Intl.DateTimeFormat('en-US', { timeZone }).format(new Date());
+      return timeZone;
+    } catch {
+      // 忽略非法时区
+    }
+  }
+  return getSystemTimezone();
+}
+
 /**
  * 将 Date 对象转换为 YYYY-MM-DD 格式的本地日期键
- * 为了保证一致性，默认使用 'Asia/Shanghai' 时区
  */
-function toLocalDateKey(date: Date, timeZone: string = DEFAULT_TIMEZONE): string {
+function toLocalDateKey(date: Date, timeZone?: string): string {
+  const tz = normalizeTimezone(timeZone);
   try {
-    if (timeZone === DEFAULT_TIMEZONE) {
-      return DATE_FORMATTER.format(date);
-    }
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      timeZone
-    });
-    return formatter.format(date);
+    return getDateFormatter(tz).format(date);
   } catch {
-    // 降级方案：如果时区无效，回退到原始逻辑（服务器本地时间）
+    // 降级方案：如果格式化失败，回退到 Date 对象的本地时间
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -106,34 +129,29 @@ function toLocalDateKey(date: Date, timeZone: string = DEFAULT_TIMEZONE): string
   }
 }
 
-function normalizeTimezone(timeZone?: string): string {
-  if (!timeZone) return DEFAULT_TIMEZONE;
-  try {
-    Intl.DateTimeFormat('en-US', { timeZone }).format(new Date());
-    return timeZone;
-  } catch {
-    return DEFAULT_TIMEZONE;
-  }
-}
-
 /**
  * 获取指定时区的当天开始时间戳（毫秒）
  * 使用与 toLocalDateKey 相同的时区，确保一致性
  */
-function getStartOfDayInTimezone(date: Date, timeZone: string = DEFAULT_TIMEZONE): number {
-  const dateKey = toLocalDateKey(date, timeZone);
+function getStartOfDayInTimezone(date: Date, timeZone?: string): number {
+  const tz = normalizeTimezone(timeZone);
+  const dateKey = toLocalDateKey(date, tz);
   // 构造该时区的午夜时间
   const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone,
+    timeZone: tz,
     timeZoneName: 'shortOffset'
   });
   const parts = formatter.formatToParts(date);
-  const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value || '+08:00';
-  // 解析偏移量，如 "GMT+8" -> "+08:00"
-  const offsetMatch = offsetPart.match(/GMT([+-])(\d+)/);
-  const offset = offsetMatch
-    ? `${offsetMatch[1]}${offsetMatch[2].padStart(2, '0')}:00`
-    : '+08:00';
+  const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT';
+  // 解析偏移量，如 "GMT+8", "GMT+05:30", "GMT-5", "GMT"
+  const offsetMatch = offsetPart.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+  let offset = '+00:00';
+  if (offsetMatch) {
+    const sign = offsetMatch[1];
+    const hours = offsetMatch[2].padStart(2, '0');
+    const minutes = offsetMatch[3] || '00';
+    offset = `${sign}${hours}:${minutes}`;
+  }
   return new Date(`${dateKey}T00:00:00${offset}`).getTime();
 }
 
@@ -142,15 +160,16 @@ function getStartOfDayInTimezone(date: Date, timeZone: string = DEFAULT_TIMEZONE
  * 统一处理数字时间戳和字符串日期格式
  * 返回 null 表示无效日期
  */
-function parseSummaryDateKey(date: number | string, timeZone: string = DEFAULT_TIMEZONE): string | null {
+function parseSummaryDateKey(date: number | string, timeZone?: string): string | null {
+  const tz = normalizeTimezone(timeZone);
   if (typeof date === 'number') {
     const d = new Date(normalizeUnixTs(date));
     if (isNaN(d.getTime())) return null;
-    return toLocalDateKey(d, timeZone);
+    return toLocalDateKey(d, tz);
   }
   const utcDate = new Date(String(date).replace(/\//g, '-') + 'T00:00:00Z');
   if (isNaN(utcDate.getTime())) return null;
-  return toLocalDateKey(utcDate, timeZone);
+  return toLocalDateKey(utcDate, tz);
 }
 
 function getStartOfDay(date: Date): Date {
@@ -161,16 +180,16 @@ function getStartOfDay(date: Date): Date {
 
 /**
  * 获取指定日期所在自然周的周一（一周的第一天）
- * 使用 Asia/Shanghai 时区确保一致性
  */
-function getMonday(date: Date, timeZone: string = DEFAULT_TIMEZONE): Date {
+function getMonday(date: Date, timeZone?: string): Date {
+  const tz = normalizeTimezone(timeZone);
   // 获取该时区下的日期信息
   const formatter = new Intl.DateTimeFormat('en-CA', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     weekday: 'short',
-    timeZone
+    timeZone: tz
   });
 
   const parts = formatter.formatToParts(date);
@@ -192,8 +211,9 @@ function getMonday(date: Date, timeZone: string = DEFAULT_TIMEZONE): Date {
   return monday;
 }
 
-function calcDaysSince(createdAt: Date, timeZone: string = DEFAULT_TIMEZONE): number {
-  const diffMs = getStartOfDayInTimezone(new Date(), timeZone) - getStartOfDayInTimezone(createdAt, timeZone);
+function calcDaysSince(createdAt: Date, timeZone?: string): number {
+  const tz = normalizeTimezone(timeZone);
+  const diffMs = getStartOfDayInTimezone(new Date(), tz) - getStartOfDayInTimezone(createdAt, tz);
   return Math.max(0, Math.floor(diffMs / MS_PER_DAY));
 }
 
@@ -232,15 +252,16 @@ function resolveTierIndex(rawAny: any, rawData: DuolingoRawUser): number {
 function parseCreationDate(
   creationTs: number | undefined,
   created: string | undefined,
-  timeZone: string = DEFAULT_TIMEZONE
+  timeZone?: string
 ): { dateStr: string; ageDays: number } {
+  const tz = normalizeTimezone(timeZone);
   if (creationTs) {
     const ts = creationTs < 10000000000 ? creationTs * 1000 : creationTs;
     const cDate = new Date(ts);
     if (!isNaN(cDate.getTime())) {
       return {
-        dateStr: cDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', timeZone }),
-        ageDays: calcDaysSince(cDate, timeZone)
+        dateStr: cDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: tz }),
+        ageDays: calcDaysSince(cDate, tz)
       };
     }
   }
@@ -248,8 +269,8 @@ function parseCreationDate(
     const cDate = new Date(created);
     if (!isNaN(cDate.getTime())) {
       return {
-        dateStr: cDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', timeZone }),
-        ageDays: calcDaysSince(cDate, timeZone)
+        dateStr: cDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: tz }),
+        ageDays: calcDaysSince(cDate, tz)
       };
     }
   }
@@ -261,23 +282,24 @@ function resolveStreakExtendedTime(
   rawAny: any,
   rawData: DuolingoRawUser,
   localTodayStart: number,
-  timeZone: string = DEFAULT_TIMEZONE
+  timeZone?: string
 ): string | undefined {
   if (!streakExtendedToday) return undefined;
+  const tz = normalizeTimezone(timeZone);
 
   if (rawAny.streakData?.currentStreak?.lastExtendedDate) {
     return new Date(rawAny.streakData.currentStreak.lastExtendedDate)
-      .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone });
+      .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: tz });
   }
 
   if (rawData.calendar?.length) {
-    const todayStr = toLocalDateKey(new Date(), timeZone);
+    const todayStr = toLocalDateKey(new Date(), tz);
     const todayEvents = rawData.calendar
-      .filter(e => toLocalDateKey(new Date(normalizeUnixTs(e.datetime)), timeZone) === todayStr)
+      .filter(e => toLocalDateKey(new Date(normalizeUnixTs(e.datetime)), tz) === todayStr)
       .sort((a, b) => a.datetime - b.datetime);
     if (todayEvents.length > 0) {
       return new Date(normalizeUnixTs(todayEvents[0].datetime))
-        .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone });
+        .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: tz });
     }
   }
 
@@ -287,7 +309,7 @@ function resolveStreakExtendedTime(
       .sort((a: any, b: any) => a.time - b.time);
     if (todayGains.length > 0) {
       return new Date(todayGains[0].time * 1000)
-        .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone });
+        .toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: tz });
     }
   }
 
@@ -624,10 +646,14 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
 }
 
 export async function fetchDuolingoData(username?: string, _jwt?: string): Promise<UserData> {
-  const url = username ? `/api/data?username=${encodeURIComponent(username)}` : '/api/data';
   const timezone = typeof Intl !== 'undefined'
     ? Intl.DateTimeFormat().resolvedOptions().timeZone
     : undefined;
+  const params = new URLSearchParams();
+  if (username) params.set('username', username);
+  if (timezone) params.set('tz', timezone);
+  const queryString = params.toString();
+  const url = queryString ? `/api/data?${queryString}` : '/api/data';
   const response = await fetch(url, {
     headers: timezone ? { 'x-user-timezone': timezone } : undefined
   });
