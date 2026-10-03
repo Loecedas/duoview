@@ -27,7 +27,7 @@ export const translations = {
     'dash.account_age': '账号年龄',
     'dash.streak': '连胜天数',
     'dash.study_time': '学习分钟',
-    'dash.estimated_time': '预估投入时间',
+    'dash.estimated_time': '总学习时间',
     'dash.learning_courses': '学习课程',
     'dash.today_xp': '今日 XP',
     'dash.today_lessons': '今日课程',

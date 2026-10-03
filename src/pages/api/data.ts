@@ -70,52 +70,100 @@ export const GET: APIRoute = async ({ request }) => {
             'Sec-Fetch-Site': 'same-origin',
         };
 
-        // 1. 获取基础信息和 userId（这是最快的接口）
-        const v2Result = await fetchWithTimeout(
-            `${DUOLINGO_BASE_URL}/2023-05-23/users?username=${encodeURIComponent(username)}`,
-            headers, 10000
-        );
+        // 1. 取长补短 - 第一阶段：优先利用 2023 接口获取新版数据，2017 接口并发预取与容灾
+        // 2023 优势：支持多学科（数学/音乐/象棋）、全新 Learning Path 数据结构与现代字段
+        // 2017 优势：老用户历史数据兼容性高，具备王冠与旧版结构，且可作为主备容灾兜底
+        const encodedUser = encodeURIComponent(username);
+        const [v2Result, v17Result] = await Promise.all([
+            fetchWithTimeout(`${DUOLINGO_BASE_URL}/2023-05-23/users?username=${encodedUser}`, headers, 7000),
+            fetchWithTimeout(`${DUOLINGO_BASE_URL}/2017-06-30/users?username=${encodedUser}`, headers, 5000),
+        ]);
 
-        if (v2Result.status === 401 || v2Result.status === 403) {
+        if (v2Result.status === 401 || v2Result.status === 403 || v17Result.status === 401 || v17Result.status === 403) {
             return jsonResponse({ error: '该账号设置为私密，无法访问', code: 'PRIVATE_ACCOUNT' }, 403);
         }
 
         const v2Raw = v2Result.data as { users?: any[] } | any;
-        const v2Data = v2Raw?.users?.[0] || v2Raw;
+        const v2User = v2Raw?.users?.[0] || v2Raw;
 
-        if (!v2Data) {
+        const v17Raw = v17Result.data as { users?: any[] } | any;
+        const v17User = v17Raw?.users?.[0] || v17Raw;
+
+        if (!v2User && !v17User) {
             return jsonResponse({ error: '找不到该用户，请检查用户名是否正确' }, 404);
         }
 
-        const userId = v2Data.id || v2Data.user_id;
-        
-        let userData = { ...v2Data } as any;
-        let hasAmebaCourses = false;
+        // 基础数据深度融合：以 2023 为主（新版现代化模型），2017 补齐历史缺漏字段
+        let userData: any = {
+            ...(v17User || {}),
+            ...(v2User || {}),
+            tracking_properties: {
+                ...(v17User?.tracking_properties || v17User?.trackingProperties || {}),
+                ...(v2User?.tracking_properties || v2User?.trackingProperties || {}),
+            }
+        };
 
-        // 2. 并发获取新版核心数据（Ameba 课程、经验摘要、排行榜）
-        if (userId) {
-            const authHeaders: HeadersInit = jwt ? { ...headers, 'Authorization': `Bearer ${jwt}` } : headers;
+        const userId = userData.id || userData.user_id;
+
+        // 2. 取长补短 - 第二阶段：利用 2023 模块化微端点与 2017 字段投影获取总经验与总时长
+        // 在 2023 和 2017 接口 URL 后通过 ?fields= 显式声明拉取 totalXp, totalTime, timeSpent, totalSessionTime 等全量字段
+        if (userId && jwt) {
+            const authHeaders: HeadersInit = { ...headers, 'Authorization': `Bearer ${jwt}` };
             
-            const [amebaResult, xpResult, lbResult] = await Promise.all([
+            const extendedFields = [
+                'courses', 'currentCourse', 'fromLanguage', 'learningLanguage',
+                'trackingProperties', 'totalXp', 'total_xp', 'totalTime',
+                'timeSpent', 'totalSessionTime', 'totalTimeSpent',
+                'streak', 'streakData', 'streakExtendedToday', 'creationDate',
+                'hasPlus', 'hasSuper', 'xpGains', 'weeklyXp',
+                'numSessionsCompleted', 'streakFreezeCount'
+            ].join(',');
+
+            const [amebaResult, fields17Result, xpResult, lbResult] = await Promise.all([
                 fetchWithTimeout(
-                    `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}?fields=courses,currentCourse,fromLanguage,learningLanguage,trackingProperties,totalXp`,
-                    authHeaders, 8000
+                    `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}?fields=${extendedFields}`,
+                    authHeaders, 7000
                 ),
-                jwt ? fetchWithTimeout(
+                fetchWithTimeout(
+                    `${DUOLINGO_BASE_URL}/2017-06-30/users/${userId}?fields=gems,lingots,trackingProperties,totalXp,total_xp,totalTime,totalSessionTime,timeSpent`,
+                    authHeaders, 7000
+                ),
+                fetchWithTimeout(
                     `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}/xp_summaries?startDate=1970-01-01`,
-                    authHeaders, 8000
-                ) : Promise.resolve({ data: null, status: 200 }),
-                jwt ? fetchWithTimeout(
+                    authHeaders, 7000
+                ),
+                fetchWithTimeout(
                     `${DUOLINGO_BASE_URL}/2023-05-23/users/${userId}/leaderboards?active=true`,
-                    authHeaders, 8000
-                ) : Promise.resolve({ data: null, status: 200 })
+                    authHeaders, 7000
+                )
             ]);
 
             if (amebaResult.data) {
                 userData._amebaData = amebaResult.data;
+                if (typeof amebaResult.data.totalXp === 'number') {
+                    userData.totalXp = Math.max(userData.totalXp || 0, amebaResult.data.totalXp);
+                }
+                if (typeof amebaResult.data.totalTime === 'number') {
+                    userData.totalTime = amebaResult.data.totalTime;
+                }
+                if (typeof amebaResult.data.timeSpent === 'number') {
+                    userData.timeSpent = amebaResult.data.timeSpent;
+                }
                 if (amebaResult.data.courses?.length > 0) {
                     userData.courses = [...(userData.courses || []), ...amebaResult.data.courses];
-                    hasAmebaCourses = true;
+                }
+            }
+
+            if (fields17Result.data) {
+                userData._fields17Data = fields17Result.data;
+                if (typeof fields17Result.data.totalXp === 'number') {
+                    userData.totalXp = Math.max(userData.totalXp || 0, fields17Result.data.totalXp);
+                }
+                if (typeof fields17Result.data.total_xp === 'number') {
+                    userData.totalXp = Math.max(userData.totalXp || 0, fields17Result.data.total_xp);
+                }
+                if (typeof fields17Result.data.totalSessionTime === 'number') {
+                    userData.totalSessionTime = fields17Result.data.totalSessionTime;
                 }
             }
 
@@ -126,28 +174,6 @@ export const GET: APIRoute = async ({ request }) => {
             if (lbResult.data) {
                 userData._leaderboardHistory = lbResult.data;
             }
-        }
-
-        // 3. 只有在新版接口未能获取到课程数据时，才回退请求极其缓慢的旧版接口
-        if (!hasAmebaCourses) {
-            const [v1Result, api1Result] = await Promise.all([
-                fetchWithTimeout(`${DUOLINGO_BASE_URL}/users/${encodeURIComponent(username)}`, headers, 8000),
-                fetchWithTimeout(`${DUOLINGO_BASE_URL}/api/1/users/show?username=${encodeURIComponent(username)}`, headers, 8000)
-            ]);
-            
-            const v1Data = v1Result.data || {};
-            const api1Data = api1Result.data || {};
-            
-            userData = {
-                ...v1Data,
-                ...api1Data,
-                ...userData, // 保证 V2 数据的最高优先级
-                tracking_properties: {
-                    ...(v1Data.tracking_properties || v1Data.trackingProperties || {}),
-                    ...(api1Data.tracking_properties || api1Data.trackingProperties || {}),
-                    ...(userData.tracking_properties || userData.trackingProperties || {})
-                }
-            };
         }
 
         if (!userData || typeof userData !== 'object') {

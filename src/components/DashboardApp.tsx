@@ -526,10 +526,10 @@ export default function DashboardApp({ username }: DashboardAppProps) {
     const usernames = username.split(',').map(u => u.trim()).filter(Boolean);
 
     const statItems: Array<{ label: string; value: string | number; icon: IconName; color: string; bg: string }> = [
-        { label: '预估投入时间', value: userData.estimatedLearningTime, icon: 'clock', color: '#a855f7', bg: 'bg-purple-50' },
-        { label: '总经验', value: userData.totalXp.toLocaleString() + ' XP', icon: 'bolt', color: '#eab308', bg: 'bg-yellow-50' },
-        { label: '学习课程', value: userData.courses.length, icon: 'books', color: '#58cc02', bg: 'bg-blue-50' },
-        { label: '账号年龄', value: `${userData.accountAgeDays} 天`, icon: 'calendar', color: '#ff4b4b', bg: 'bg-purple-50' },
+        { label: t('dash.estimated_time'), value: userData.estimatedLearningTime, icon: 'clock', color: '#a855f7', bg: 'bg-purple-50' },
+        { label: t('dash.total_xp'), value: userData.totalXp.toLocaleString() + ' XP', icon: 'bolt', color: '#eab308', bg: 'bg-yellow-50' },
+        { label: t('dash.learning_courses'), value: userData.courses.length, icon: 'books', color: '#58cc02', bg: 'bg-blue-50' },
+        { label: t('dash.account_age'), value: `${userData.accountAgeDays} 天`, icon: 'calendar', color: '#ff4b4b', bg: 'bg-purple-50' },
     ];
 
     return (

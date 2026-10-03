@@ -201,7 +201,7 @@ function MonthlyChart({
     <div ref={containerRef} className="chart-shell flex w-full flex-col gap-2">
       <div className="w-full">
         <ResponsiveContainer width="100%" height={160}>
-          <AreaChart data={chartData} margin={{ top: 14, right: 10, bottom: 5, left: -8 }}>
+          <AreaChart data={chartData} margin={{ top: 14, right: 24, bottom: 5, left: -8 }}>
             <defs>
               <linearGradient id={gradientId1} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={themeColor1} stopOpacity={0.25} />

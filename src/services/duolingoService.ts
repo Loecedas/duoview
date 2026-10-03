@@ -336,10 +336,27 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
 
   const streak = rawData.site_streak ?? rawData.streak ?? 0;
 
-  let totalXp = rawAny._amebaData?.totalXp ?? rawData.total_xp ?? rawData.totalXp ?? 0;
-  if (totalXp === 0) totalXp = sumPoints(rawData.languages);
+  // 1. 总经验值（Total XP）：直接从多邻国接口权威字段提取
+  let totalXp = 0;
+  if (typeof rawData.totalXp === 'number' && rawData.totalXp > 0) {
+    totalXp = rawData.totalXp;
+  } else if (typeof rawData.total_xp === 'number' && rawData.total_xp > 0) {
+    totalXp = rawData.total_xp;
+  } else if (typeof rawAny._amebaData?.totalXp === 'number' && rawAny._amebaData.totalXp > 0) {
+    totalXp = rawAny._amebaData.totalXp;
+  } else if (typeof rawAny.tracking_properties?.total_xp === 'number' && rawAny.tracking_properties.total_xp > 0) {
+    totalXp = rawAny.tracking_properties.total_xp;
+  } else if (typeof rawAny.trackingProperties?.total_xp === 'number' && rawAny.trackingProperties.total_xp > 0) {
+    totalXp = rawAny.trackingProperties.total_xp;
+  }
+
+  // 若接口根字段为 0 或缺失，从各子模块接口数据中累计真实 XP
+  if (totalXp === 0 && rawAny._xpSummaries?.length) {
+    totalXp = rawAny._xpSummaries.reduce((sum: number, s: any) => sum + (s.gainedXp ?? s.gained_xp ?? 0), 0);
+  }
+  if (totalXp === 0 && rawData.courses?.length) totalXp = sumPoints(rawData.courses);
+  if (totalXp === 0 && rawData.languages?.length) totalXp = sumPoints(rawData.languages);
   if (totalXp === 0 && rawData.language_data) totalXp = sumPoints(Object.values(rawData.language_data));
-  if (totalXp === 0) totalXp = sumPoints(rawData.courses);
 
   const dailyGoal = rawData.dailyGoal ?? rawData.daily_goal ?? rawData.xpGoal ?? 0;
   const creationTs = rawData.creation_date || rawData.creationDate;
@@ -374,17 +391,28 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
   // Fallback and legacy courses (Merge with Ameba courses if not already present)
   if (rawData.courses?.length) {
     rawData.courses.forEach((c: any) => {
-      const exists = courses.some(ac => 
+      const existing = courses.find(ac => 
         (ac.id && c.id && ac.id === c.id) || 
         (ac.learningLanguage === c.learningLanguage && ac.fromLanguage === c.fromLanguage)
       );
-      if (!exists && (c.learningLanguage || c.subject || c.title)) {
+      if (existing) {
+        // 取长补短：若 2023 路径数据缺王冠或历史经验，从 2017/传统课程补齐
+        if (!existing.crowns && c.crowns) {
+          existing.crowns = c.crowns;
+        }
+        if ((!existing.xp || existing.xp === 0) && (c.xp || c.points)) {
+          existing.xp = c.xp || c.points || 0;
+        }
+        if ((!existing.timeSpent || existing.timeSpent === 0) && (c.timeSpent || c.duration)) {
+          existing.timeSpent = c.timeSpent || c.duration || 0;
+        }
+      } else if (c.learningLanguage || c.subject || c.title) {
         const langCode = c.learningLanguage || c.subject;
         const title = formatCourseTitle(c.title, langCode, c.subject);
 
         courses.push({
           title: title,
-          xp: c.xp || 0,
+          xp: c.xp || c.points || 0,
           fromLanguage: c.fromLanguage || 'en',
           learningLanguage: c.learningLanguage || c.subject || 'unknown',
           crowns: c.crowns || 0,
@@ -406,6 +434,7 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
         crowns: l.crowns || 0,
         fromLanguage: 'en',
         learningLanguage: l.language,
+        timeSpent: 0,
       }));
 
     for (const v1c of v1Courses) {
@@ -434,6 +463,7 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
           crowns,
           fromLanguage: langDetail.from_language || 'en',
           learningLanguage: learningLanguage,
+          timeSpent: 0,
         };
       });
       
@@ -444,12 +474,19 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
   totalXp = Math.max(totalXp, coursesXpSum);
 
   // 最终去重：结合归一化后的标题和源语言进行去重
-  // 确保用不同语言学习的同一种语言不会被错误合并
+  // 确保用不同语言学习的同一种语言不会被错误合并，且无法获取时长的课程一律明确归零 (0)
   const courseMap = new Map<string, Course>();
   for (const c of courses) {
     const normalizedTitle = (c.title || "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
     const key = `${normalizedTitle}-${c.fromLanguage || 'en'}`;
-    // 只要归一化标题和源语言一致，就视为同一科目，后入的数据（Ameba）会覆盖旧数据
+    const prev = courseMap.get(key);
+    if (prev) {
+      c.timeSpent = c.timeSpent || prev.timeSpent || 0;
+      c.crowns = c.crowns || prev.crowns || 0;
+      c.xp = Math.max(c.xp || 0, prev.xp || 0);
+    } else {
+      c.timeSpent = c.timeSpent || 0;
+    }
     courseMap.set(key, c);
   }
   courses = Array.from(courseMap.values());
@@ -473,7 +510,9 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
     const dateKey = toLocalDateKey(new Date(eventTs), timeZone);
     const improvement = event.improvement || 0;
     xpByDate.set(dateKey, (xpByDate.get(dateKey) || 0) + improvement);
-    timeByDate.set(dateKey, (timeByDate.get(dateKey) || 0) + Math.ceil((improvement || 10) / 3));
+    if (improvement > 0) {
+      timeByDate.set(dateKey, (timeByDate.get(dateKey) || 0) + Math.max(1, Math.round(improvement / 30 * 3)));
+    }
   }
 
   if (rawAny._xpSummaries?.length) {
@@ -486,7 +525,7 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
 
       const sessionTimeSeconds = summary.totalSessionTime ?? summary.total_session_time ?? 0;
       const minutes = Math.round(sessionTimeSeconds / 60);
-      timeByDate.set(dateKey, minutes > 0 ? minutes : Math.ceil(gainedXp / 3));
+      timeByDate.set(dateKey, minutes);
     }
   } else if (rawData.calendar?.length) {
     rawData.calendar.forEach(addCalendarEvent);
@@ -544,34 +583,54 @@ export function transformDuolingoData(rawData: DuolingoRawUser, requestedTimezon
   const hasItemPremium = rawAny.has_item_premium_subscription || rawAny.has_item_immersive_subscription;
   const isPlus = !!(rawData.hasPlus || rawData.hasSuper || rawData.plusStatus === 'active' || rawAny.has_plus || rawAny.is_plus || hasInventoryPremium || hasItemPremium);
 
-  // 计算总学习时间：优先使用课程中的真实 timeSpent
-  const coursesTimeSum = courses.reduce((sum, c) => sum + (c.timeSpent || 0), 0);
-  let totalMinutes = coursesTimeSum;
-  let hasRealTimeData = totalMinutes > 0;
+  // 2. 总学习时间（Total Learning Time）：全量累计用户自注册以来的完整总时长
+  // 必须获取用户全部科目、全部历史会话与已完成课时的总共时长
 
-  if (!hasRealTimeData && rawAny._xpSummaries?.length) {
-    const totalSeconds = rawAny._xpSummaries.reduce((acc: number, s: any) =>
+  // 来源 A：从 _xpSummaries 累加多邻国记录的全部真实 session 秒数 (totalSessionTime)
+  let summariesSeconds = 0;
+  if (rawAny._xpSummaries?.length) {
+    summariesSeconds = rawAny._xpSummaries.reduce((acc: number, s: any) =>
       acc + (s.totalSessionTime ?? s.total_session_time ?? 0), 0);
-    totalMinutes = Math.floor(totalSeconds / 60);
-    hasRealTimeData = totalSeconds > 0;
   }
+  const summariesMinutes = Math.floor(summariesSeconds / 60);
 
-  if (!hasRealTimeData) {
-    let dailyTimeSum = 0;
-    timeByDate.forEach(t => { dailyTimeSum += t; });
-    totalMinutes = dailyTimeSum;
-    hasRealTimeData = totalMinutes > 0;
+  // 来源 B：从各课程对象中累加真实 timeSpent (已转为分钟)
+  const coursesMinutes = courses.reduce((sum, c) => sum + (c.timeSpent || 0), 0);
+
+  // 来源 C：从用户根字段或 trackingProperties 中提取全局总时长 (若有)
+  const rootSeconds = Math.max(
+    typeof rawAny.totalSessionTime === 'number' ? rawAny.totalSessionTime : 0,
+    typeof rawAny.total_session_time === 'number' ? rawAny.total_session_time : 0,
+    typeof rawAny.totalTime === 'number' ? rawAny.totalTime : 0,
+    typeof rawAny.totalTimeSpent === 'number' ? rawAny.totalTimeSpent : 0,
+    typeof rawAny.total_time_spent === 'number' ? rawAny.total_time_spent : 0,
+    typeof rawAny.timeSpent === 'number' ? rawAny.timeSpent : 0,
+  );
+  const rootMinutes = Math.floor(rootSeconds / 60);
+
+  // 来源 D：从每日记录的真实时长中累加
+  let dailyTimeSum = 0;
+  timeByDate.forEach(t => { if (t > 0) dailyTimeSum += t; });
+
+  // 严格以接口实际返回的数据为准，不采用任何人工课时或经验折算公式
+  const totalMinutes = Math.max(
+    summariesMinutes,
+    coursesMinutes,
+    rootMinutes,
+    dailyTimeSum
+  );
+  const hasRealTimeData = totalMinutes > 0;
+
+  let estimatedLearningTime = '0分钟';
+  if (hasRealTimeData) {
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours > 0) {
+      estimatedLearningTime = `${hours}小时 ${mins}分钟`;
+    } else {
+      estimatedLearningTime = `${mins}分钟`;
+    }
   }
-
-  // 兜底方案：如果总时间为 0 且有经验值，则根据 XP 估算 (每 3 XP 估算为 1 分钟)
-  if (totalMinutes === 0 && totalXp > 0) {
-    totalMinutes = Math.ceil(totalXp / 3);
-    hasRealTimeData = true;
-  }
-
-  const estimatedLearningTime = hasRealTimeData
-    ? `${Math.floor(totalMinutes / 60)}小时 ${totalMinutes % 60}分钟`
-    : '暂无数据';
 
   let xpToday = 0;
   let lessonsToday = 0;

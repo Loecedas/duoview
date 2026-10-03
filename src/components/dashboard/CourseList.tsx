@@ -35,7 +35,7 @@ export function CourseList({ courses, seq = 5 }: CourseListProps): React.ReactEl
 
               return (
                 <div
-                  key={course.id}
+                  key={`${course.id || course.title}-${course.fromLanguage || 'en'}-${idx}`}
                   className="bg-gray-50 rounded-xl p-2.5 sm:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all flex-1 min-w-0"
                 >
                   <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">

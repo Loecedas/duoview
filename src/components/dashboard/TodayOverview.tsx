@@ -10,9 +10,10 @@ interface TodayOverviewProps {
 }
 
 export function TodayOverview({ userData, iconMode, seq = 4 }: TodayOverviewProps): React.ReactElement {
-  const todayTime = userData?.dailyTimeHistory?.length
-    ? userData.dailyTimeHistory[userData.dailyTimeHistory.length - 1].time || '-'
-    : '-';
+  const todayTimeVal = userData?.dailyTimeHistory?.length
+    ? userData.dailyTimeHistory[userData.dailyTimeHistory.length - 1].time
+    : undefined;
+  const todayTime = userData ? (todayTimeVal !== undefined ? todayTimeVal : '-') : '—';
 
   function renderTodayStatus(): React.ReactNode {
     if (!userData) {
