@@ -1,20 +1,36 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, passthroughImageService } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import netlify from '@astrojs/netlify';
+import cloudflare from '@astrojs/cloudflare';
 
-const getAdapter = () => {
-  if (process.env.NETLIFY) return netlify();
-  return vercel();
-};
+function resolveAdapter() {
+  if (process.env.NETLIFY) {
+    return netlify();
+  }
+  if (process.env.VERCEL) {
+    return vercel();
+  }
+  return cloudflare({
+    platformProxy: {
+      enabled: true,
+    },
+  });
+}
 
 export default defineConfig({
   output: 'server',
+  adapter: resolveAdapter(),
+  image: {
+    service: passthroughImageService(),
+  },
   integrations: [react()],
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ['react-is', 'recharts'],
+    },
   },
-  adapter: getAdapter()
 });

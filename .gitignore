@@ -37,3 +37,8 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+
+# Cloudflare
+.wrangler/
+.dev.vars
+

@@ -30,7 +30,7 @@ function isValidUsername(username: string): boolean {
     return /^[a-zA-Z0-9_\-.]{1,64}$/.test(username);
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const username = url.searchParams.get('username')?.trim();
     const userTimezone = url.searchParams.get('tz')?.trim() || request.headers.get('x-user-timezone')?.trim() || undefined;
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request }) => {
         return jsonResponse({ error: '用户名格式无效' }, 400);
     }
 
-    const jwt = getEnv('DUOLINGO_JWT');
+    const jwt = getEnv('DUOLINGO_JWT', locals);
 
     const cacheKey = `user:${username.toLowerCase()}:tz:${userTimezone || 'default'}`;
     const cached = cache.get(cacheKey);
